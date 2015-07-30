@@ -90,6 +90,37 @@ var checkEnvironment = function(req, res, next) {
     next();
 };
 
+var auth = function(req, res, next) {
+    var auth;
+
+    // check whether an autorization header was send    
+    if (req.headers.authorization) {
+      // only accepting basic auth, so:
+      // * cut the starting "Basic " from the header
+      // * decode the base64 encoded username:password
+      // * split the string at the colon
+      // -> should result in an array
+      auth = new Buffer(req.headers.authorization.substring(6), 'base64').toString().split(':');
+    }
+
+    // checks if:
+    // * auth array exists 
+    // * first value matches the expected user 
+    // * second value the expected password
+    if (!auth || auth[0] !== 'admin' || auth[1] !== 'admin') {
+        // any of the tests failed
+        // send an Basic Auth request (HTTP Code: 401 Unauthorized)
+        res.statusCode = 401;
+        // User can be changed to anything, will be prompted to the user
+        res.setHeader('WWW-Authenticate', 'Basic realm="User"');
+        // this will displayed in the browser when authorization is cancelled
+        res.end('Unauthorized');
+    } else {
+        // continue with processing, user was authenticated
+        next();
+    }
+}
+
 //Main router
 var Monitor = express.Router();
 
@@ -168,7 +199,7 @@ app.use('/monitor', Monitor);
 //Simple admin router
 var MonitorAdmin = express.Router();
 
-MonitorAdmin.get('/', function(req, res){
+MonitorAdmin.get('/', auth, function(req, res){
     res.send('this is protected');
 });
 
