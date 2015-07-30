@@ -166,8 +166,18 @@ Monitor.post('/', function(req, res) {
 //Use CashRegister router
 app.use('/monitor', Monitor);
 
+//Simple admin router
+var MonitorAdmin = express.Router();
+
+MonitorAdmin.get('/', function(req, res){
+    res.send('this is protected');
+});
+
+app.use('/admin', MonitorAdmin);
+
+//Default route, blank
 app.get('/', function(req, res){
-    res.send('Nothing to see here');
+    res.send(':p');
 });
 
 /*===============START=================*/
