@@ -126,7 +126,7 @@ Monitor.post('/', function(req, res) {
                                         requests = regions.map(function(r){
                                             var woeid = r.get('woeid');
                                             
-                                            return Trend.get(woeid); 
+                                            return Trends.get(woeid); 
                                         });
 
                                         Promise
