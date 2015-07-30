@@ -95,11 +95,17 @@ Monitor.post('/', function(req, res) {
     //Check attrs
     console.log('monitor');
 
+    var Region = Parse.Object.extend('Region');
+
     res.status(200).json({status: 'success'});
 });
 
 //Use CashRegister router
 app.use('/monitor', Monitor);
+
+app.get('/', function(req, res){
+    res.send('Nothing to see here');
+});
 
 /*===============START=================*/
 app.listen(app.get('port'), function() {
