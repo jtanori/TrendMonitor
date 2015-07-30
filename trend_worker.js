@@ -20,10 +20,9 @@ Monitor.EventEmitter.once("result", function (results) {
 function monitor(){
     console.log('Monitor task initiated');
 
-    var data = JSON.stringify({});
+    var data = JSON.stringify({foo: 'bar'});
 	var request = http.request({
         host:"twittertrendmonitor.herokuapp.com",
-        port:443,
         method: "POST",
         path:"/monitor",
         headers: {

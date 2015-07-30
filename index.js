@@ -18,6 +18,8 @@ var parseString = require('xml2js').parseString;
 var parse = require('xml2json');
 var events = require("events");
 var Parse = require('parse').Parse;
+var Trends = require('./Trends');
+var Promise = require('Promise');
 
 //Initialize Parse
 Parse.initialize(process.env.PARSE_APP_ID, process.env.PARSE_JS_KEY, process.env.PARSE_MASTER_KEY);
@@ -94,11 +96,70 @@ Monitor.use(logRequest);
 
 Monitor.post('/', function(req, res) {
     //Check attrs
-    console.log('monitor');
-
     var Region = Parse.Object.extend('Region');
+    var query = new Parse.Query(Region);
 
-    res.status(200).json({status: 'success'});
+    var Trend = Parse.Object.extend('Trend');
+    var trendQuery = new Parse.Query(Trend);
+
+    var Email = Parse.Object.extend('Email');
+    var emailQuery = new Parse.query(Email);
+
+    var findings = [];
+    var requests = [];
+
+    query
+        .exists('name')
+        .find()
+        .then(function(regions){
+            if(regions.length){
+                trendQuery
+                    .equalTo('active', true)
+                    .find()
+                    .then(function(trends){
+                        if(trends.length){
+                            email
+                                .exists('address', true)
+                                .find()
+                                .then(function(users){
+                                    if(users.length){
+                                        requests = regions.map(function(r){
+                                            var woeid = r.get('woeid');
+                                            
+                                            return Trend.get(woeid); 
+                                        });
+
+                                        Promise
+                                            .all(request)
+                                            .then(function(results){
+                                                console.log(arguments, 'results');
+
+                                                res.status(200).json({status: 'success', data: results});
+                                            })
+                                            .fail(function(e){
+                                                res.status(400).json({status: 'error', error: e});
+                                            });
+                                    }else{
+                                        res.status(400).json({status: 'error', error: {essage: 'No users found'}});
+                                    }
+                                })
+                                .fail(function(e){
+                                    res.status(400).json({status: 'error', error: e});
+                                });
+                        }else{
+                            res.status(400).json({status: 'error', error: {message: 'No trends found'}});
+                        }
+                    })
+                    .fail(function(e){
+                        res.status(400).json({status: 'error', error: e});
+                    });
+            }else{
+                res.status(400).json({status: 'error', error: {message: 'No regions found'}});
+            }
+        })
+        .fail(function(e){
+            res.status(400).json({status: 'error', error: e});
+        });
 });
 
 //Use CashRegister router
