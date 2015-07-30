@@ -25,7 +25,7 @@ function getTrends(region){
 				if(!_.isNull(e)){
 					reject(e);
 				}else{
-					resolve(auth2.get('https://api.twitter.com/1.1/trends/place.json?' + region));
+					resolve(oauth2.get('https://api.twitter.com/1.1/trends/place.json?' + region));
 				}
 			});
 	});
