@@ -1,0 +1,7 @@
+{
+  "name": "twitter-trend-monitor",
+  "description": "Twitter trend monitor",
+  "repository": "https://git.heroku.com/twittertrendmonitor.git",
+  "logo": "",
+  "keywords": ["twitter", "trend", "monitor"]
+}
