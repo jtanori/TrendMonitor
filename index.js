@@ -130,7 +130,7 @@ Monitor.post('/', function(req, res) {
                                         });
 
                                         Promise
-                                            .all(request)
+                                            .all(requests)
                                             .then(function(results){
                                                 console.log(arguments, 'results');
 
