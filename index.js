@@ -103,7 +103,7 @@ Monitor.post('/', function(req, res) {
     var trendQuery = new Parse.Query(Trend);
 
     var Email = Parse.Object.extend('Email');
-    var emailQuery = new Parse.query(Email);
+    var emailQuery = new Parse.Query(Email);
 
     var findings = [];
     var requests = [];
