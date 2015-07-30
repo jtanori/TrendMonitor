@@ -172,7 +172,7 @@ MonitorAdmin.get('/', function(req, res){
     res.send('this is protected');
 });
 
-app.use('/admin', wwwhisper(), MonitorAdmin);
+app.use('/admin', MonitorAdmin);
 
 //Default route, blank
 app.get('/', function(req, res){
