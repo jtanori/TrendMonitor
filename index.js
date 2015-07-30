@@ -94,6 +94,8 @@ Monitor.use(logRequest);
 Monitor.post('/', function(req, res) {
     //Check attrs
     console.log('monitor');
+
+    res.status(200).json({status: 'success'});
 });
 
 //Use CashRegister router
