@@ -20,6 +20,7 @@ var events = require("events");
 var Parse = require('parse').Parse;
 var Trends = require('./Trends');
 var Promise = require('promise');
+var wwwhisper = require('connect-wwwhisper');
 
 //Initialize Parse
 Parse.initialize(process.env.PARSE_APP_ID, process.env.PARSE_JS_KEY, process.env.PARSE_MASTER_KEY);
