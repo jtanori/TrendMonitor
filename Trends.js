@@ -22,10 +22,13 @@ function getTrends(region){
 			'',
 			{'grant_type':'client_credentials'},
 			function (e, access_token, refresh_token, results){
+				console.log()
 				if(!_.isNull(e)){
 					reject(e);
 				}else{
-					resolve(oauth2.get('https://api.twitter.com/1.1/trends/place.json?' + region));
+					oauth2.get('https://api.twitter.com/1.1/trends/place.json?' + region, access_token, function(){
+						resolve(Array.prototype.slice.call(arguments));
+					});
 				}
 			});
 	});
