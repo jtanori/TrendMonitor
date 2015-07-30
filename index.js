@@ -118,8 +118,8 @@ Monitor.post('/', function(req, res) {
                     .find()
                     .then(function(trends){
                         if(trends.length){
-                            email
-                                .exists('address', true)
+                            emailQuery
+                                .exists('address')
                                 .find()
                                 .then(function(users){
                                     if(users.length){
