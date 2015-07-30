@@ -7,12 +7,10 @@ function getTrends(region){
 		throw new Error('findTrend requires a region');
 	}
 
-	var OAuth2 = OAuth.OAuth2;    
-	var twitterConsumerKey = 'your key';
-	var twitterConsumerSecret = 'your secret';
+	var OAuth2 = OAuth.OAuth2;
 	var oauth2 = new OAuth2(
-		server.config.keys.twitter.consumerKey,
-		twitterConsumerSecret, 
+		process.env.TWITTER_CONSUMER_KEY,
+		process.env.TWITTER_CONSUMER_SECRET, 
 		'https://api.twitter.com/', 
 		null,
 		'oauth2/token', 
