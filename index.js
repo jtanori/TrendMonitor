@@ -132,7 +132,7 @@ Monitor.post('/', function(req, res) {
                                         Promise
                                             .all(requests)
                                             .then(function(results){
-                                                console.log(arguments, 'results');
+                                                console.log(results, 'results');
 
                                                 res.status(200).json({status: 'success', data: results});
                                             }, function(e){

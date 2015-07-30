@@ -22,12 +22,11 @@ function getTrends(region){
 			process.env.TWITTER_USER_TOKEN,
 			process.env.TWITTER_USER_SECRET,
 			function (e, data, res){
-				console.log(e, data, res);
-
+				console.log(data);
 				if(!_.isNull(e)){
 					reject(e);
 				}else{
-					resolve(Array.prototype.slice.call(arguments));
+					resolve(data);
 				}    
 			}
 		);
