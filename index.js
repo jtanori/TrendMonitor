@@ -28,7 +28,6 @@ Parse.initialize(process.env.PARSE_APP_ID, process.env.PARSE_JS_KEY, process.env
 //===============EXPRESS================
 // Configure Express
 var app = express();
-app.use(wwwhisper());
 app.set('port', (process.env.PORT || 4000));
 app.use(session({
     secret: process.env.SESSION_SECRET,
@@ -173,7 +172,7 @@ MonitorAdmin.get('/', function(req, res){
     res.send('this is protected');
 });
 
-app.use('/admin', MonitorAdmin);
+app.use('/admin', wwwhisper(), MonitorAdmin);
 
 //Default route, blank
 app.get('/', function(req, res){
