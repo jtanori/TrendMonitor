@@ -22,7 +22,7 @@ function getTrends(region){
 			'',
 			{'grant_type':'client_credentials'},
 			function (e, access_token, refresh_token, results){
-				console.log()
+				console.log(e, access_token, refresh_token, results);
 				if(!_.isNull(e)){
 					reject(e);
 				}else{
