@@ -2,13 +2,9 @@ var _ = require('lodash');
 var OAuth = require('oauth');
 var Promise = require('promise');
 
-function getTrends(region, trend){
-	if(!region || !trend){
-		throw new Error('findTrend requires two arguments');
-	}
-
-	if(!_.isString(region) || !_.isString(trend)){
-		throw new Error('findTrend: region and trend must be both strings');
+function getTrends(region){
+	if(!region || _.isEmpty(region)){
+		throw new Error('findTrend requires a region');
 	}
 
 	var OAuth2 = OAuth.OAuth2;    
