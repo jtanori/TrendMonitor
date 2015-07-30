@@ -135,8 +135,7 @@ Monitor.post('/', function(req, res) {
                                                 console.log(arguments, 'results');
 
                                                 res.status(200).json({status: 'success', data: results});
-                                            })
-                                            .fail(function(e){
+                                            }, function(e){
                                                 res.status(400).json({status: 'error', error: e});
                                             });
                                     }else{
