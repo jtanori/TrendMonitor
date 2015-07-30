@@ -28,6 +28,7 @@ Parse.initialize(process.env.PARSE_APP_ID, process.env.PARSE_JS_KEY, process.env
 //===============EXPRESS================
 // Configure Express
 var app = express();
+app.use(wwwhisper());
 app.set('port', (process.env.PORT || 4000));
 app.use(session({
     secret: process.env.SESSION_SECRET,
