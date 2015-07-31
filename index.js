@@ -20,7 +20,12 @@ var events = require("events");
 var Parse = require('parse').Parse;
 var Trends = require('./Trends');
 var Promise = require('promise');
-var wwwhisper = require('connect-wwwhisper');
+var mailgun = require('mailgun-js')({apiKey: process.env.MAILGUN_API_KEY, domain: process.env.MAILGUN_DOMAIN});
+var memjs = require('memjs');
+var mc = memjs.Client.create(process.env.MEMCACHEDCLOUD_SERVERS, {
+  username: process.env.MEMCACHEDCLOUD_USERNAME,
+  password: process.env.MEMCACHEDCLOUD_PASSWORD
+});
 
 //Initialize Parse
 Parse.initialize(process.env.PARSE_APP_ID, process.env.PARSE_JS_KEY, process.env.PARSE_MASTER_KEY);
@@ -142,6 +147,7 @@ Monitor.post('/', function(req, res) {
 
     var findings = [];
     var requests = [];
+    var now, cachedTrends, minutes = 5*60*1000;
 
     query
         .exists('name')
@@ -153,26 +159,72 @@ Monitor.post('/', function(req, res) {
                     .find()
                     .then(function(trends){
                         if(trends.length){
+                            trends = trends.map(function(t){return t.get('name').toLowerCase();});
+
                             emailQuery
                                 .exists('address')
                                 .find()
                                 .then(function(users){
                                     if(users.length){
-                                        requests = regions.map(function(r){
-                                            var woeid = r.get('woeid');
-                                            
-                                            return Trends.get(woeid); 
-                                        });
+                                        users = users.map(function(u){return u.get('address')});
+                                        cachedTrends = mc.get('trends');
 
-                                        Promise
-                                            .all(requests)
-                                            .then(function(results){
-                                                console.log(results, 'results');
+                                        //console.log(cachedTrends.createdAt, (new Date())*1, minutes, 'dates');
 
-                                                res.status(200).json({status: 'success', data: results});
-                                            }, function(e){
-                                                res.status(400).json({status: 'error', error: e});
+                                        if(!_.isEmpty(cachedTrends) && (((new Date())*1) - ((new Date(cachedTrends.createdAt))*1) < minutes)){
+                                            console.log('using cached trends');
+                                            console.log('cachedTrends', cachedTrends);
+                                            res.status(200).json({status: 'success', data: cachedTrends});
+                                        } else {
+                                            console.log('requesting new trends');
+                                            requests = regions.map(function(r){
+                                                var woeid = r.get('woeid');
+                                                
+                                                return Trends.get(woeid); 
                                             });
+
+                                            Promise
+                                                .all(requests)
+                                                .then(function(results){
+                                                    //Cache trends
+                                                    results = _.map(results, function(r){
+                                                        return {name: r.locations[0].name, trends: _.map(r.trends, function(r){return r.name.toLowerCase()})};
+                                                    });
+
+                                                    _.each(results, function(r){
+                                                        var intersection = _.intersection(r.trends, trends);
+
+                                                        if(intersection.length){
+                                                            findings.push({name: r.name, trends: intersection});
+                                                        }else{
+                                                            intersection = _.filter(r.trends, function(t){
+                                                                return _.filter(trends, function(tr){
+                                                                    return t.indexOf(tr) >= 0;
+                                                                });
+                                                            });
+
+                                                            if(intersection.length){
+                                                                findings.push({name: r.name, trends: intersection});
+                                                            }
+                                                        }
+                                                    });
+
+                                                    _.each(users, function(u){
+                                                        var data = {
+                                                            from: 'Naif Ali <naif@naif.cc>',
+                                                            to: u,
+                                                            subject: 'New alert on twitter monitor',
+                                                            text: JSON.stringify(findings)
+                                                        };
+
+                                                        mailgun.messages().send(data);
+                                                    });
+
+                                                    res.status(200).json({status: 'success', data: results});
+                                                }, function(e){
+                                                    res.status(400).json({status: 'error', data: e});
+                                                });
+                                        }
                                     }else{
                                         res.status(400).json({status: 'error', error: {essage: 'No users found'}});
                                     }
