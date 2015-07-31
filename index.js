@@ -193,20 +193,20 @@ Monitor.post('/', function(req, res) {
 
                                                     _.each(results, function(r){
                                                         var intersection = _.intersection(r.trends, trends);
+                                                        var subIntersections;
+
+                                                        subIntersections = _.filter(r.trends, function(t){
+                                                            return _.filter(trends, function(tr){
+                                                                return t.indexOf(tr) >= 0;
+                                                            });
+                                                        });
+
+                                                        if(subIntersections.length){
+                                                            intersection.concat(subIntersections);
+                                                        }
 
                                                         if(intersection.length){
                                                             findings.push({name: r.name, trends: intersection});
-                                                        }else{
-                                                            intersection = _.filter(r.trends, function(t){
-                                                                return _.filter(trends, function(tr){
-                                                                    console.log(t, tr, 'index of');
-                                                                    return t.indexOf(tr) >= 0;
-                                                                });
-                                                            });
-
-                                                            if(intersection.length){
-                                                                findings.push({name: r.name, trends: intersection});
-                                                            }
                                                         }
                                                     });
 
