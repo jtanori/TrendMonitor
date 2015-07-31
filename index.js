@@ -197,7 +197,7 @@ Monitor.post('/', function(req, res) {
 
                                                         _.each(r.trends, function(t){
                                                             _.each(trends, function(tr){
-                                                                console.log(t, 'index of', tr, t.indexOf(tr));
+                                                                console.log(t + ' index of [' + tr + '] : ' + t.indexOf(tr));
                                                                 if(t.indexOf(tr) >= 0) { subIntersections.push(tr) }
                                                             });
                                                         });
