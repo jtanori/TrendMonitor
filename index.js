@@ -199,6 +199,7 @@ Monitor.post('/', function(req, res) {
                                                         }else{
                                                             intersection = _.filter(r.trends, function(t){
                                                                 return _.filter(trends, function(tr){
+                                                                    console.log(t, tr, 'index of');
                                                                     return t.indexOf(tr) >= 0;
                                                                 });
                                                             });
