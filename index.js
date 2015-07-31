@@ -193,34 +193,38 @@ Monitor.post('/', function(req, res) {
 
                                                     _.each(results, function(r){
                                                         var intersection = _.intersection(r.trends, trends);
-                                                        var subIntersections = _.filter(r.trends, function(t){
-                                                            return _.filter(trends, function(tr){
-                                                                console.log(t, tr, 'index of');
-                                                                return t.indexOf(tr) >= 0;
+                                                        var subIntersections = [];
+
+                                                        _.each(r.trends, function(t){
+                                                            _.each(trends, function(tr){
+                                                                console.log(t, 'index of', tr, t.indexOf(tr));
+                                                                t.indexOf(tr) >= 0 ? subIntersections.push(tr);
                                                             });
                                                         });
 
-                                                        console.log('subIntersections', subIntersections);
+                                                        console.log('subIntersections', subIntersections, subIntersections.length);
 
                                                         if(subIntersections.length){
                                                             intersection.concat(subIntersections);
                                                         }
 
                                                         if(intersection.length){
-                                                            findings.push({name: r.name, trends: intersection});
+                                                            findings.push(r.name + ', "' + intersection.toString() + '"'});
                                                         }
                                                     });
 
-                                                    _.each(users, function(u){
-                                                        var data = {
-                                                            from: 'Naif Ali <naif@naif.cc>',
-                                                            to: u,
-                                                            subject: 'New alert on twitter monitor',
-                                                            text: JSON.stringify(findings)
-                                                        };
+                                                    if(findings.length){
+                                                        _.each(users, function(u){
+                                                            var data = {
+                                                                from: 'Naif Ali <naif@naif.cc>',
+                                                                to: u,
+                                                                subject: 'New alert on twitter monitor',
+                                                                text: (['name, keywords'].concat(findings)).join("\n")
+                                                            };
 
-                                                        mailgun.messages().send(data);
-                                                    });
+                                                            mailgun.messages().send(data);
+                                                        });
+                                                    }
 
                                                     res.status(200).json({status: 'success', data: results});
                                                 }, function(e){
