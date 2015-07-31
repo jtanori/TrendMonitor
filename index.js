@@ -197,14 +197,17 @@ Monitor.post('/', function(req, res) {
 
                                                         _.each(r.trends, function(t){
                                                             _.each(trends, function(tr){
-                                                                if(t.indexOf(tr) >= 0) { subIntersections += (t + ', ') ; }
+                                                                if(t.indexOf(tr) >= 0) { subIntersections += (t + ' ::: ') ; }
                                                             });
                                                         });
 
                                                         console.log('subIntersections', subIntersections, subIntersections.length);
-                                                        
+                                                        console.log('intersections', intersections);
+
                                                         if(intersection.length){
                                                             findings.push(r.name + ', "' + ( subIntersections.length ? subIntersections : '' ) + intersection.toString() + '"');
+                                                        }else if(subIntersections.length){
+                                                            findings.push(r.name + ', "' + subIntersections + '"');
                                                         }
                                                     });
 
