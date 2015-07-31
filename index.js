@@ -195,6 +195,7 @@ Monitor.post('/', function(req, res) {
                                                         console.log(r.trends);
                                                         console.log('------');
                                                         console.log(trends);
+                                                        console.log('------');
 
                                                         var intersection = _.intersection(r.trends, trends) || [];
                                                         var subIntersections = [];
@@ -207,14 +208,18 @@ Monitor.post('/', function(req, res) {
 
                                                         console.log('intersection')
                                                         console.log(intersection);
-
-                                                        intersection.concat(subIntersections);
-
+                                                        console.log('------');
                                                         console.log('subIntersections');
                                                         console.log(subIntersections);
 
                                                         if(intersection.length){
+                                                            console.log('adding intersection', intersection);
                                                             findings.push(r.name + ', "' + intersection.join(', ') + '"');
+                                                        }
+
+                                                        if(subIntersections.length){
+                                                            console.log('adding subIntersections', subIntersections);
+                                                            findings.push(r.name + ', "' + subIntersections.join(', ') + '"');
                                                         }
                                                     });
 
