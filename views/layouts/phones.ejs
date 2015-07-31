@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html class="no-js phones">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, minimal-ui">
+    <title><%=data.title||'PushPidgeon'%></title>
+    <!-- stylesheets -->
+    <link rel="stylesheet" href="/semantic.min.css">
+    <link rel="stylesheet" href="/stylesheets/app.css">
+    <link rel="stylesheet" href="/stylesheets/phones.css">
+    <%-stylesheets%>
+    <!-- Core scripts -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="/semantic.min.js"></script>
+    <script>
+        App = {parse: {APP_ID: '<%= PARSE_APP_ID %>', JS_KEY: '<%= PARSE_JS_KEY %>'}, views: {}};
+    </script>
+  </head>
+  <body>
+    <% include ../partials/mobile/sidebar %>
+    
+    <div class="pusher">
+        <% include ../partials/header %>
+
+        <%-blocks.header%>
+        <%-blocks.left%>
+        <%-body -%>
+        <%-block.right%>
+        <%-blocks.footer%>
+
+        <% include ../partials/footer %>
+
+    </div>
+
+    <script src="/components/fastclick/fastclick.js"></script>
+    <%-scripts%>
+    <% include ../partials/commons %>
+  </body>
+</html>

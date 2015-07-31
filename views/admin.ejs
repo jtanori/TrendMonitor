@@ -1,0 +1,120 @@
+<% layout('./layouts/main') -%>
+
+<div class="ui raised padded container basic segment">
+	<h1 class="ui center aligned blue header">
+		Manage your keywords
+	</h1>
+	<div class="ui padded stackable doubling center aligned grid">
+		<div id="keywords" class="ui ten wide column">
+			<div class="ui segment">
+				<div class="ui blue labels">
+				<% _.each(data.keywords, function(k){ %>
+				<span class="ui label" data-id="<%= k.id %>"><%= k.name %> <i class="icon close"></i></span>
+				<% }) %>
+				</div>
+
+				<div class="ui hidden divider"></div>
+
+				<form class="ui form">
+					<div class="ui right labeled left icon input">
+						<i class="tags icon"></i>
+						<input type="text" placeholder="Add new keyword" id="keyword" name="keyword">
+						<a class="ui green tag label" id="form-submit">
+							<i class="plus icon"></i> Save
+						</a>
+					</div>
+
+					<div class="ui error message"></div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+$(function(){
+	Parse.initialize(App.parse.APP_ID, App.parse.JS_KEY);
+	Parse._.templateSettings = {
+        interpolate: /\{\{(.+?)\}\}/g,
+        evaluate: /\{\%(.+?)\%\}/g
+    };
+
+	var Home = Parse.View.extend({
+		el: '#keywords',
+		keywordTemplate: Parse._.template('<span class="ui label" data-id="{{ k.id }}">{{ k.name }} <i class="icon close"></i></span>'),
+		events: {
+			'click .label .close': 'remove',
+			'click #form-submit': 'submit',
+			'submit': 'save'
+		},
+		initialize: function(){
+			return this.render();
+		},
+		render: function(){
+
+			this.dom = {};
+			this.dom.form = this.$el.find('form');
+			this.dom.keywords = this.$el.find('.labels');
+
+			this.dom.form.form({
+				fields: {
+					keyword: {
+						identifier: 'keyword',
+						rules: [
+							{
+								type: 'length[2]',
+								prompt: 'Keyword must be at least 2 chars length'
+							}
+						]
+					}
+				}
+			});
+
+			return this;
+		},
+		submit: function(){
+			this.dom.form.submit();
+		},
+		remove: function(e){
+			var $target = $(e.currentTarget).parent();
+			var id = $target.attr('data-id');
+			var Trend = Parse.Object.extend('Trend');
+			var trend = new Trend({id: id});
+
+			trend.destroy();
+			$target.remove();
+		},
+		save: function(e){
+			if(e && e.preventDefault){
+				e.preventDefault();
+			}
+
+			var isValid = this.dom.form.form('validate form');
+			var values = this.dom.form.form('get values');
+
+			var Trend = Parse.Object.extend('Trend');
+			var trend = new Trend({name: values.keyword, active: true});
+
+			var form = this.dom.form;
+			var keywords = this.dom.keywords;
+			var template = this.keywordTemplate;
+
+			form.addClass('loading');
+
+			trend
+				.save()
+				.then(function(){
+					keywords.append(template({k: {name: trend.get('name'), id: trend.id}}));
+				})
+				.fail(function(){
+					alert('An error has occurred, please try again');
+				})
+				.always(function(){
+					form.removeClass('loading');
+				})
+		}
+	});
+
+	(new Home());
+});
+</script>

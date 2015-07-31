@@ -45,6 +45,7 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(multer());
 app.use(express.static(__dirname + '/public'));
+app.use(express.static(__dirname + '/semantic/dist'));
 app.use(helmet());
 //Enable cors
 app.use(function(req, res, next) {
@@ -57,6 +58,8 @@ app.use(function(req, res, next) {
     });
 
 app.locals._ = _;
+app.locals.PARSE_APP_ID = process.env.PARSE_APP_ID;
+app.locals.PARSE_JS_KEY = process.env.PARSE_JS_KEY;
 
 //===============ROUTES===============
 var title = process.env.DEFAULT_PAGE_TITLE;
@@ -200,7 +203,33 @@ app.use('/monitor', Monitor);
 var MonitorAdmin = express.Router();
 
 MonitorAdmin.get('/', auth, function(req, res){
-    res.send('this is protected');
+    var keywords = [];
+    var Trend = Parse.Object.extend('Trend');
+    var trendQuery = new Parse.Query(Trend);
+
+    trendQuery
+        .equalTo('active', true)
+        .find()
+        .then(function(trends){
+            keywords = trends.map(function(t){
+                return {name: t.get('name'), active: t.get('active'), id: t.id};
+            });
+            
+            res.render('admin', {
+                data: {
+                    title: 'TTM',
+                    keywords: keywords
+                }
+            });
+        })
+        .fail(function(){
+            res.render('admin', {
+                data: {
+                    title: 'TTM',
+                    keywords: keywords
+                }
+            });
+        });
 });
 
 app.use('/admin', MonitorAdmin);
