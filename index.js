@@ -148,6 +148,7 @@ Monitor.post('/', function(req, res) {
     var findings = [];
     var requests = [];
     var now, cachedTrends, minutes = 5*60*1000;
+    var template = _.template('<h1>This is what we found:</h1><br /><br /><table><thead><%= head %></thead><tbody><%= body %></tbody></table>');
 
     query
         .exists('name')
@@ -192,11 +193,6 @@ Monitor.post('/', function(req, res) {
                                                     });
 
                                                     _.each(results, function(r){
-                                                        console.log(r.trends);
-                                                        console.log('------');
-                                                        console.log(trends);
-                                                        console.log('------');
-
                                                         var intersection = _.intersection(r.trends, trends) || [];
                                                         var subIntersections = [];
 
@@ -206,25 +202,14 @@ Monitor.post('/', function(req, res) {
                                                             });
                                                         });
 
-                                                        console.log('intersection')
-                                                        console.log(intersection);
-                                                        console.log('------');
-                                                        console.log('subIntersections');
-                                                        console.log(subIntersections);
-
                                                         if(intersection.length){
-                                                            console.log('adding intersection', intersection);
-                                                            findings.push(r.name + ', "' + intersection.join(', ') + '"');
+                                                            findings.push('<tr><td>'r.name + '</td><td><span>' + intersection.join('</span><span>') + '</span></td></tr>');
                                                         }
 
                                                         if(subIntersections.length){
-                                                            console.log('adding subIntersections', subIntersections);
-                                                            findings.push(r.name + ', "' + subIntersections.join(', ') + '"');
+                                                            findings.push('<tr><td>'r.name + '</td><td><span>' + subIntersections.join('</span><span>') + '</span></td></tr>');
                                                         }
                                                     });
-
-
-                                                    console.log('findings', findings);
 
                                                     if(findings.length){
                                                         _.each(users, function(u){
@@ -232,7 +217,7 @@ Monitor.post('/', function(req, res) {
                                                                 from: 'Naif Ali <naif@naif.cc>',
                                                                 to: u,
                                                                 subject: 'New alert on twitter monitor',
-                                                                text: (['name, keywords'].concat(findings)).join("\n")
+                                                                html: template({head: '<tr><th>Region</th><th>Keywords</th></tr>', body: findings.concat("\n")})
                                                             };
 
                                                             mailgun.messages().send(data);
