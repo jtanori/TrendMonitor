@@ -148,7 +148,7 @@ Monitor.post('/', function(req, res) {
     var findings = [];
     var requests = [];
     var now, cachedTrends, minutes = 5*60*1000;
-    var template = _.template('<h1>This is what we found:</h1><br /><br /><table><thead><%= head %></thead><tbody><%= body %></tbody></table>');
+    var template = _.template('<h1>This is what we\'ve found:</h1><br /><br /><table><thead><%= head %></thead><tbody><%= body %></tbody></table>');
 
     query
         .exists('name')
@@ -203,11 +203,11 @@ Monitor.post('/', function(req, res) {
                                                         });
 
                                                         if(intersection.length){
-                                                            findings.push('<tr><td>' + r.name + '</td><td><strong dir="auto">' + intersection.join('</strong><span>') + '</span></td></tr>');
+                                                            findings.push('<tr><td>' + r.name + '</td><td><strong dir="auto">' + intersection.join('</strong> <strong>') + '</strong></td></tr>');
                                                         }
 
                                                         if(subIntersections.length){
-                                                            findings.push('<tr><td>' + r.name + '</td><td><strong dir="auto">' + subIntersections.join('</strong><span>') + '</span></td></tr>');
+                                                            findings.push('<tr><td>' + r.name + '</td><td><strong dir="auto">' + subIntersections.join('</strong> <strong>') + '</strong></td></tr>');
                                                         }
                                                     });
 
