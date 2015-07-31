@@ -33,9 +33,7 @@ function getTrends(region){
 		d = process.env.TWITTER_ACCESS_TOKEN_SECRET_3;
 		break;
 	}
-
-	console.log(a,b,c,d);
-
+	
 	var oauth = new OAuth.OAuth(
 		'https://api.twitter.com/oauth/request_token',
 		'https://api.twitter.com/oauth/access_token',
