@@ -217,7 +217,7 @@ Monitor.post('/', function(req, res) {
                                                                 from: 'Naif Ali <naif@naif.cc>',
                                                                 to: u,
                                                                 subject: 'New alert on twitter monitor',
-                                                                html: template({head: '<tr><th>Region</th><th>Keywords</th></tr>', body: findings.split("\n")})
+                                                                html: template({head: '<tr><th>Region</th><th>Keywords</th></tr>', body: findings.join("\n")})
                                                             };
 
                                                             mailgun.messages().send(data);
