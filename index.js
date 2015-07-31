@@ -211,6 +211,9 @@ Monitor.post('/', function(req, res) {
                                                         }
                                                     });
 
+
+                                                    console.log('findings', findings);
+
                                                     if(findings.length){
                                                         _.each(users, function(u){
                                                             var data = {
