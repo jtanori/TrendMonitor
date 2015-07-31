@@ -192,7 +192,11 @@ Monitor.post('/', function(req, res) {
                                                     });
 
                                                     _.each(results, function(r){
-                                                        var intersection = _.intersection(r.trends, trends);
+                                                        console.log(r.trends);
+                                                        console.log('------');
+                                                        console.log(trends);
+
+                                                        var intersection = _.intersection(r.trends, trends) || [];
                                                         var subIntersections = [];
 
                                                         _.each(r.trends, function(t){
@@ -201,10 +205,13 @@ Monitor.post('/', function(req, res) {
                                                             });
                                                         });
 
-                                                        console.log('subIntersections', subIntersections, subIntersections.length);
-                                                        console.log('intersections', intersections);
+                                                        console.log('intersection')
+                                                        console.log(intersection);
 
                                                         intersection.concat(subIntersections);
+
+                                                        console.log('subIntersections');
+                                                        console.log(subIntersections);
 
                                                         if(intersection.length){
                                                             findings.push(r.name + ', "' + intersection.join(', ') + '"');
