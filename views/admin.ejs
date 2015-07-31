@@ -9,7 +9,7 @@
 			<div class="ui segment">
 				<div class="ui blue labels">
 				<% _.each(data.keywords, function(k){ %>
-				<span class="ui label" data-id="<%= k.id %>"><%= k.name %> <i class="icon close"></i></span>
+				<span class="ui label" data-id="<%= k.id %>" dir="auto"><%= k.name %> <i class="icon close"></i></span>
 				<% }) %>
 				</div>
 
@@ -41,7 +41,7 @@ $(function(){
 
 	var Home = Parse.View.extend({
 		el: '#keywords',
-		keywordTemplate: Parse._.template('<span class="ui label" data-id="{{ k.id }}">{{ k.name }} <i class="icon close"></i></span>'),
+		keywordTemplate: Parse._.template('<span class="ui label" data-id="{{ k.id }}" dir="auto">{{ k.name }} <i class="icon close"></i></span>'),
 		events: {
 			'click .label .close': 'remove',
 			'click #form-submit': 'submit',
