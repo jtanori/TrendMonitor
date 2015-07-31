@@ -203,11 +203,11 @@ Monitor.post('/', function(req, res) {
                                                         });
 
                                                         if(intersection.length){
-                                                            findings.push('<tr><td>'r.name + '</td><td><strong dir="auto">' + intersection.join('</strong><span>') + '</span></td></tr>');
+                                                            findings.push('<tr><td>' + r.name + '</td><td><strong dir="auto">' + intersection.join('</strong><span>') + '</span></td></tr>');
                                                         }
 
                                                         if(subIntersections.length){
-                                                            findings.push('<tr><td>'r.name + '</td><td><strong dir="auto">' + subIntersections.join('</strong><span>') + '</span></td></tr>');
+                                                            findings.push('<tr><td>' + r.name + '</td><td><strong dir="auto">' + subIntersections.join('</strong><span>') + '</span></td></tr>');
                                                         }
                                                     });
 
