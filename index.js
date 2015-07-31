@@ -209,7 +209,7 @@ Monitor.post('/', function(req, res) {
                                                         }
 
                                                         if(intersection.length){
-                                                            findings.push(r.name + ', "' + intersection.toString() + '"'});
+                                                            findings.push(r.name + ', "' + intersection.toString() + '"');
                                                         }
                                                     });
 
