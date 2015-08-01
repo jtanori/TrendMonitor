@@ -145,111 +145,142 @@ Monitor.post('/', function(req, res) {
     var Email = Parse.Object.extend('Email');
     var emailQuery = new Parse.Query(Email);
 
-    var findings = [];
-    var requests = [];
-    var now, cachedTrends, minutes = 5*60*1000;
     var template = _.template('<h1>This is what we\'ve found:</h1><br /><br /><table><thead><%= head %></thead><tbody><%= body %></tbody></table>');
+    var TrendsHistory = Parse.Object.extend('History');
+    var trendHistoryQuery = new Parse.Query(TrendsHistory);
+
+    var regions, trends, trendHistory, users = [], findings = [], trendsHistory = [];
 
     query
         .exists('name')
         .find()
-        .then(function(regions){
-            if(regions.length){
-                trendQuery
-                    .equalTo('active', true)
-                    .find()
-                    .then(function(trends){
-                        if(trends.length){
-                            trends = trends.map(function(t){return t.get('name').toLowerCase();});
-
-                            emailQuery
-                                .exists('address')
-                                .find()
-                                .then(function(users){
-                                    if(users.length){
-                                        users = users.map(function(u){return u.get('address')});
-                                        cachedTrends = mc.get('trends');
-
-                                        //console.log(cachedTrends.createdAt, (new Date())*1, minutes, 'dates');
-
-                                        if(!_.isEmpty(cachedTrends) && (((new Date())*1) - ((new Date(cachedTrends.createdAt))*1) < minutes)){
-                                            console.log('using cached trends');
-                                            console.log('cachedTrends', cachedTrends);
-                                            res.status(200).json({status: 'success', data: cachedTrends});
-                                        } else {
-                                            console.log('requesting new trends');
-                                            requests = regions.map(function(r){
-                                                var woeid = r.get('woeid');
-                                                
-                                                return Trends.get(woeid); 
-                                            });
-
-                                            Promise
-                                                .all(requests)
-                                                .then(function(results){
-                                                    //Cache trends
-                                                    results = _.map(results, function(r){
-                                                        return {name: r.locations[0].name, trends: _.map(r.trends, function(r){return r.name.toLowerCase()})};
-                                                    });
-
-                                                    _.each(results, function(r){
-                                                        var intersection = _.intersection(r.trends, trends) || [];
-                                                        var subIntersections = [];
-
-                                                        _.each(r.trends, function(t){
-                                                            _.each(trends, function(tr){
-                                                                if(t.indexOf(tr) >= 0) { subIntersections.push(t); }
-                                                            });
-                                                        });
-
-                                                        if(intersection.length){
-                                                            findings.push('<tr><td>' + r.name + '</td><td><strong dir="auto">' + intersection.join('</strong> <strong>') + '</strong></td></tr>');
-                                                        }
-
-                                                        if(subIntersections.length){
-                                                            findings.push('<tr><td>' + r.name + '</td><td><strong dir="auto">' + subIntersections.join('</strong> <strong>') + '</strong></td></tr>');
-                                                        }
-                                                    });
-
-                                                    if(findings.length){
-                                                        _.each(users, function(u){
-                                                            var data = {
-                                                                from: 'Naif Ali <naif@naif.cc>',
-                                                                to: u,
-                                                                subject: 'New alert on twitter monitor',
-                                                                html: template({head: '<tr><th>Region</th><th>Keywords</th></tr>', body: findings.join("\n")})
-                                                            };
-
-                                                            mailgun.messages().send(data);
-                                                        });
-                                                    }
-
-                                                    res.status(200).json({status: 'success', data: results});
-                                                }, function(e){
-                                                    res.status(400).json({status: 'error', data: e});
-                                                });
-                                        }
-                                    }else{
-                                        res.status(400).json({status: 'error', error: {essage: 'No users found'}});
-                                    }
-                                })
-                                .fail(function(e){
-                                    res.status(400).json({status: 'error', error: e});
-                                });
-                        }else{
-                            res.status(400).json({status: 'error', error: {message: 'No trends found'}});
-                        }
-                    })
-                    .fail(function(e){
-                        res.status(400).json({status: 'error', error: e});
-                    });
+        .then(function(r){
+            if(r.length){
+                regions = r;
+                return trendQuery.equalTo('active', true).find();
             }else{
-                res.status(400).json({status: 'error', error: {message: 'No regions found'}});
+                return Parse.Promise.error('No regions found');
             }
+        })
+        .then(function(t){
+            if(t.length){
+                trends = t.map(function(t){return t.get('name').toLowerCase();});
+
+                return emailQuery.exists('address').find();
+            }else{
+                return Parse.Promise.error('No trends found in database');
+            }
+        })
+        .then(function(u){
+            if(u.length){
+                users = u.map(function(u){return u.get('address')});
+
+                return regions.map(function(r){
+                    var woeid = r.get('woeid');
+                    
+                    return Trends.get(woeid); 
+                });
+            }else{
+                return Parse.Promise.error('No users found');
+            }
+        })
+        .then(function(requests){
+            Promise
+                .all(requests)
+                .then(function(results){
+                    //Cache trends
+                    results = _.map(results, function(r){
+                        return {name: r.locations[0].name, trends: _.map(r.trends, function(r){return r.name.toLowerCase()})};
+                    });
+
+                    _.each(results, function(r){
+                        var intersection = _.intersection(r.trends, trends) || [];
+                        var subIntersections = [];
+
+                        _.each(r.trends, function(t){
+                            _.each(trends, function(tr){
+                                if(t.indexOf(tr) >= 0) {
+                                    subIntersections.push(t);
+                                    trendsHistory.push(t);
+                                }
+                            });
+                        });
+
+                        _.each(intersection, function(t){
+                            trendsHistory.push(t);
+                        });
+
+                        if(intersection.length){
+                            findings.push('<tr><td>' + r.name + '</td><td><strong dir="auto">' + intersection.join('</strong> <strong>') + '</strong></td></tr>');
+                        }
+
+                        if(subIntersections.length){
+                            findings.push('<tr><td>' + r.name + '</td><td><strong dir="auto">' + subIntersections.join('</strong> <strong>') + '</strong></td></tr>');
+                        }
+                    });
+
+                    if(findings.length){
+                        trendsHistory = _.uniq(trendsHistory);
+
+                        trendHistoryQuery
+                            .containedIn('trends', trendsHistory)
+                            .find()
+                            .then(function(savedTrends){
+                                if(!savedTrends.length){
+                                    trendHistory = new TrendsHistory({trends: trendsHistory});
+                                    trendHistory.save();
+
+                                    _.each(users, function(u){
+                                        var data = {
+                                            from: 'Naif Ali <naif@naif.cc>',
+                                            to: u,
+                                            subject: 'New alert on twitter monitor',
+                                            html: template({head: '<tr><th>Region</th><th>Keywords</th></tr>', body: findings.join("\n")})
+                                        };
+
+                                        mailgun.messages().send(data);
+                                    });
+
+                                    res.status(200).json({status: 'success', data: trendsHistory});
+                                }else{
+                                    res.status(200).json({status: 'success', message: 'trend unchanged'});
+                                }
+                            })
+                            .fail(function(e){
+                                console.log('fail', e);
+                                res.status(200).json({status: 'success', message: 'nothing to report'});
+                            });
+                    }else{
+                        //Drop history records if no findings
+                        trendHistoryQuery
+                            .find()
+                            .then(function(r){
+                                if(r.length){
+                                    Parse.Object
+                                        .destroyAll(r)
+                                        .then(function(){
+                                            res.status(200).json({status: 'success', message: 'Database wiped'});
+                                        })
+                                        .fail(function(){
+                                            res.status(200).json({status: 'error', error: e});
+                                        })
+                                }else{
+                                    res.status(200).json({status: 'success', message: 'Nothing to delete'});
+                                }
+                            })
+                            .fail(function(e){
+                                res.status(200).json({status: 'error', error: e});
+                            });
+                        
+                    }
+                }, function(e){
+                    res.status(400).json({status: 'error', error: e});
+                });
         })
         .fail(function(e){
             res.status(400).json({status: 'error', error: e});
         });
+
 });
 
 //Use CashRegister router
