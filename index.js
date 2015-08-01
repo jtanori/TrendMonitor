@@ -193,6 +193,9 @@ Monitor.post('/', function(req, res) {
                         return {name: r.locations[0].name, trends: _.map(r.trends, function(r){return r.name.toLowerCase()})};
                     });
 
+                    console.log(results, 'results');
+                    console.log(trends, 'keywords');
+
                     _.each(results, function(r){
                         var intersection = _.intersection(r.trends, trends) || [];
                         var subIntersections = [];
