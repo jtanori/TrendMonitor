@@ -105,6 +105,7 @@ $(function(){
 				.save()
 				.then(function(){
 					keywords.append(template({k: {name: trend.get('name'), id: trend.id}}));
+					form.form('reset form');
 				})
 				.fail(function(){
 					alert('An error has occurred, please try again');
