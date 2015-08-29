@@ -332,6 +332,8 @@ var Aggregator = express.Router();
 Aggregator.use(logRequest);
 
 Aggregator.get('/', function(req, res){
+    console.log('HOST:', req.headers.host);
+    
     var isAjax = req.xhr;
     var keys = JSON.parse(process.env.TWITTER_PASSPORT_KEYS);
     var config = {
@@ -350,8 +352,6 @@ Aggregator.get('/', function(req, res){
     if(req.query.from){
         options.max_id = req.query.from;
     }
-
-    console.log(options, 'options', req.params);
 
     //Get twitts for this instance
     aggregator
