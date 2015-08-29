@@ -1,0 +1,122 @@
+<% layout('../layouts/main') -%>
+<% stylesheet('styles/aggregator/main.css') -%>
+
+<div class="ui container center aligned" id="aggregator-content">
+	<div id="page-top">
+	</div>
+
+	<div id="page-middle">
+
+		<div>
+			<img src="<%= data.logo %>" />
+		</div>
+
+		<% data.results.forEach(function(r){ %>
+			
+			<div class="ui basic segment item" id="tweet-<%= r.id %>">
+				<a href="/picture/<%= r.id %>/<%= r.urlText %>" target="_blank">
+					<img src="<%= r.entities.media[0].media_url %>" />
+				</a>
+
+				<h1 class="ui small header"><%- r.text %></h1>
+
+				<div class="ui left aligned">
+					<a class="ui tiny button" href="https://twitter.com/intent/retweet?tweet_id=<%= r.id %>">
+						<i class="retweet icon"></i>
+						<span>ريتويت</span>
+						<span><%= r.retweet_count %></span>
+					</a>
+				</div>
+			</div>
+			
+		<% }) %>
+
+	</div>
+
+	<div class="ui basic segment" dir="ltr">
+		<div class="ui centered inline text loader" id="loader">
+			Loading more content...
+		</div>
+	</div>
+</div>
+
+<div id="item-template" hidden>
+	<div class="ui basic segment item" id="tweet-{{ r.id }}">
+		<a href="/picture/{{ r.id }}/{{ r.urlText }}" target="_blank">
+			<img src="{{ r.entities.media[0].media_url }}" />
+		</a>
+
+		<h1 class="ui small header">{{ r.text }}</h1>
+
+		<div class="ui left aligned">
+			<a class="ui tiny button" href="https://twitter.com/intent/retweet?tweet_id={{ r.id }}">
+				<i class="retweet icon"></i>
+				<span>ريتويت</span>
+				<span>{{ r.retweet_count }}</span>
+			</a>
+		</div>
+	</div>
+</div>
+<script>
+
+$(function(){
+	Parse._.templateSettings = {
+        interpolate: /\{\{(.+?)\}\}/g,
+        evaluate: /\{\%(.+?)\%\}/g
+    };
+
+	var $loader = $('#loader');
+	var lastId = '<%= _.last(data.results).id - 1 %>';
+	var isLoading = false;
+	var template = Parse._.template($('#item-template').html());
+	var $container = $('#page-middle');
+
+	$('#aggregator-content')
+		.visibility({
+			once: false,
+			// update size when new content loads
+			observeChanges: true,
+			// load content on bottom edge visible
+			onBottomVisible: function() {
+				if(isLoading){
+					return;
+				}
+				//Start loading
+				isLoading = true;
+				$loader.addClass('active');
+				$.ajax({
+					url: '/',
+					data: {from: lastId},
+					dataType: 'json'
+				})
+				.then(function(data){
+					var fragment = document.createDocumentFragment();
+					var item;
+
+					console.log(data);
+
+					if(data.status === 'success' && data.results.length){
+						Parse._.each(data.results, function(i){
+							item = $(template({r: i}));
+							fragment.appendChild(item[0]);
+						});
+
+						lastId = Parse._.last(data.results).id;
+
+						$container.append(fragment);
+					}else{
+
+					}
+				})
+				.fail(function(){
+					console.log('error', argumnents);
+				})
+				.always(function(){
+					isLoading = false;
+					$loader.removeClass('active');
+				});
+			}
+		});
+});
+
+</script>

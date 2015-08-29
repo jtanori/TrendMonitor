@@ -1,0 +1,44 @@
+body {
+	background: url('/img/fp/bg.jpg');
+	padding-top: 3rem;
+	direction: rtl;
+	font-family: 'Tahoma';
+}
+
+#aggregator-content {
+	max-width: 950px;
+}
+
+#page-top {
+	background: url('/img/top.png') no-repeat center top;
+	height: 26px;
+	position: relative;
+	z-index: 1;
+}
+
+#page-middle {
+	box-shadow: 0 0 2px rgba(0,0,0,0.3);
+	background: white;
+    z-index: 0;
+    position: relative;
+}
+
+#page-middle .item {
+	max-width: 600px;
+	margin: 0 auto;
+	text-align: right;
+}
+
+#page-middle .item .header,
+#page-middle .item a.link {
+	font-weight: normal;
+	color: #696969;
+}
+
+#page-middle .item a.link {
+	color: #f5991c;
+}
+
+#page-middle .item img {
+    max-width: 100%;
+}

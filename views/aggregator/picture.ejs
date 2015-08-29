@@ -1,0 +1,31 @@
+<% layout('../layouts/main') -%>
+<% stylesheet('/styles/aggregator/main.css') -%>
+
+<div class="ui container center aligned" id="aggregator-content">
+	<div id="page-top">
+	</div>
+
+	<div id="page-middle">
+
+		<div>
+			<img src="<%= data.logo %>" />
+		</div>
+
+		<div class="ui basic segment item" id="tweet-<%= data.tweet.id %>">
+			<a href="/picture/<%= data.tweet.id %>/<%= data.tweet.text %>" target="_blank">
+				<img src="<%= data.tweet.entities.media[0].media_url %>" />
+			</a>
+
+			<h1 class="ui small header"><%- data.tweet.text %></h1>
+
+			<div class="ui left aligned">
+				<a class="ui tiny button" href="https://twitter.com/intent/retweet?tweet_id=<%= data.tweet.id %>">
+					<i class="retweet icon"></i>
+					<span>ريتويت</span>
+					<span><%= data.tweet.retweet_count %></span>
+				</a>
+			</div>
+		</div>
+
+	</div>
+</div>

@@ -14,8 +14,6 @@ var MobileDetect = require('mobile-detect');
 var helmet = require('helmet');
 var CryptoJS = require('cryptojs');
 var http = require('https');
-var parseString = require('xml2js').parseString;
-var parse = require('xml2json');
 var events = require("events");
 var Parse = require('parse').Parse;
 var Trends = require('./Trends');
@@ -26,6 +24,8 @@ var mc = memjs.Client.create(process.env.MEMCACHEDCLOUD_SERVERS, {
   username: process.env.MEMCACHEDCLOUD_USERNAME,
   password: process.env.MEMCACHEDCLOUD_PASSWORD
 });
+var TwitterAggregator = require('./TwitterAggregator');
+var Autolinker = require( 'autolinker' );
 
 //Initialize Parse
 Parse.initialize(process.env.PARSE_APP_ID, process.env.PARSE_JS_KEY, process.env.PARSE_MASTER_KEY);
@@ -292,6 +292,8 @@ app.use('/monitor', Monitor);
 //Simple admin router
 var MonitorAdmin = express.Router();
 
+MonitorAdmin.use(logRequest);
+
 MonitorAdmin.get('/', auth, function(req, res){
     var keywords = [];
     var Trend = Parse.Object.extend('Trend');
@@ -324,8 +326,120 @@ MonitorAdmin.get('/', auth, function(req, res){
 
 app.use('/admin', MonitorAdmin);
 
+//Aggregator
+var Aggregator = express.Router();
+
+Aggregator.use(logRequest);
+
+Aggregator.get('/', function(req, res){
+    var isAjax = req.xhr;
+    var keys = JSON.parse(process.env.TWITTER_PASSPORT_KEYS);
+    var config = {
+        consumer_key: keys.consumer_key,
+        consumer_secret: keys.consumer_secret,
+        access_token_key: keys.consumer_token_key,
+        access_token_secret: keys.consumer_token_secret
+    };
+    var aggregator = new TwitterAggregator();
+    var options = {
+        screen_name: keys.account,
+        exclude_replies: true, 
+        include_rts: false
+    };
+
+    if(req.query.from){
+        options.max_id = req.query.from;
+    }
+
+    console.log(options, 'options', req.params);
+
+    //Get twitts for this instance
+    aggregator
+        .client(config)
+        .getTimeline(options)
+        .then(function(tweets, response){
+            //Parse results
+            var results = tweets.filter(function(r){
+                if(r.entities && r.entities.media && r.entities.media.length){
+                    return r;
+                }
+            }).map(function(t){
+                return {
+                    id: t.id_str, 
+                    text: Autolinker.link(t.text, {twitter: true, newWindow: true, className: 'link'}), 
+                    urlText: t.text.replace(/(?:https?|ftp):\/\/\S+/g, ''),
+                    entities: t.entities,
+                    retweet_count: t.retweet_count
+                };
+            });
+
+            if(isAjax){
+                res.status(200).json({results: results, status: 'success'});
+            }else{
+                res.render('aggregator/main', {
+                    data: {
+                        title: 'aggregator',
+                        results: results,
+                        logo: '/img/fp/logo.png'
+                    }
+                });
+            }
+        }, function(e){
+            if(isAjax){
+                res.status(400).json(e);
+            }else{
+                res.render('aggregator/error', {
+                    data: {title: 'error', error: e}
+                });
+            }
+        });
+});
+
+Aggregator.get('/picture/:id/:text', function(req, res){
+    var keys = JSON.parse(process.env.TWITTER_PASSPORT_KEYS);
+    var config = {
+        consumer_key: keys.consumer_key,
+        consumer_secret: keys.consumer_secret,
+        access_token_key: keys.consumer_token_key,
+        access_token_secret: keys.consumer_token_secret
+    };
+    var aggregator = new TwitterAggregator();
+
+    console.log('id', req.params.id);
+    //Get twitts for this instance
+    aggregator
+        .client(config)
+        .getTweet({id: req.params.id})
+        .then(function(t, response){
+
+            if(t && t.entities.media && t.entities.media.length){
+                t = {
+                    id: t.id_str, 
+                    text: Autolinker.link(t.text, {twitter: true, newWindow: true, className: 'link'}), 
+                    urlText: t.text.replace(/(?:https?|ftp):\/\/\S+/g, ''),
+                    entities: t.entities,
+                    retweet_count: t.retweet_count
+                };
+
+                res.render('aggregator/picture', {
+                    data: {tweet: t, title: 'aggregator', logo: '/img/fp/logo.png'}
+                });
+            }else{
+                res.render('aggregator/error', {
+                    data: {title: 'error', error: 'Not a picture tweet'}
+                });
+            } 
+        }, function(e){
+            res.render('aggregator/error', {
+                data: {title: 'error', error: e}
+            });
+        });
+});
+
+app.use('/', Aggregator);
+
 //Default route, blank
-app.get('/', function(req, res){
+app.get('*', function(req, res){
     res.send(':p');
 });
 
