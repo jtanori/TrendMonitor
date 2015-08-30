@@ -3,31 +3,40 @@
 
 <div class="ui container center aligned" id="aggregator-content">
 	<div id="page-top">
+		<a href="/about" class="aAbout" title="نبذة عامة">نبذة عامة</a>
 	</div>
 
 	<div id="page-middle">
 
 		<div>
-			<img src="<%= data.logo %>" />
+			<a href="/" title="Home"><img src="<%= data.logo %>" /></a>
 		</div>
 
-		<% data.results.forEach(function(r){ %>
+		<% data.results.forEach(function(r, i){ %>
 			
 			<div class="ui basic segment item" id="tweet-<%= r.id %>">
-				<a href="/picture/<%= r.id %>/<%= r.urlText %>" target="_blank">
-					<img src="<%= r.entities.media[0].media_url %>" />
+				<a href="/picture/<%= r.id %>/<%= r.urlText %>" target="_blank" class="img-link" title="">
+					<% if(i >= 5) { %>
+						<img data-src="<%= r.entities.media[0].media_url %>" class="lazy" alt=""/>
+					<% } else { %>
+						<img src="<%= r.entities.media[0].media_url %>" alt=""/>
+					<% } %>
 				</a>
 
 				<h1 class="ui small header"><%- r.text %></h1>
 
 				<div class="ui left aligned">
-					<a class="ui tiny button" href="https://twitter.com/intent/retweet?tweet_id=<%= r.id %>">
+					<a class="ui tiny button" href="https://twitter.com/intent/retweet?tweet_id=<%= r.id %>" title="ريتويت" target="_blank">
 						<i class="retweet icon"></i>
 						<span>ريتويت</span>
 						<span><%= r.retweet_count %></span>
 					</a>
 				</div>
 			</div>
+			
+			<% if((i+1)%5 === 0){ %>
+			<div class="page-count" data-count="<%= i %>" ></div>
+			<% } %>
 			
 		<% }) %>
 
@@ -42,14 +51,14 @@
 
 <div id="item-template" hidden>
 	<div class="ui basic segment item" id="tweet-{{ r.id }}">
-		<a href="/picture/{{ r.id }}/{{ r.urlText }}" target="_blank">
+		<a href="/picture/{{ r.id }}/{{ r.urlText }}" target="_blank" class="img-link" title="">
 			<img src="{{ r.entities.media[0].media_url }}" />
 		</a>
 
 		<h1 class="ui small header">{{ r.text }}</h1>
 
 		<div class="ui left aligned">
-			<a class="ui tiny button" href="https://twitter.com/intent/retweet?tweet_id={{ r.id }}">
+			<a class="ui tiny button" href="https://twitter.com/intent/retweet?tweet_id={{ r.id }}" title="" target="_blank">
 				<i class="retweet icon"></i>
 				<span>ريتويت</span>
 				<span>{{ r.retweet_count }}</span>
@@ -70,6 +79,22 @@ $(function(){
 	var isLoading = false;
 	var template = Parse._.template($('#item-template').html());
 	var $container = $('#page-middle');
+
+	$('#aggregator-content .page-count')
+		.visibility({
+			initialCheck: false,
+			onTopVisible: function(){
+				ga('send', 'pageview');
+				console.log('send pageview');
+			}
+		});
+
+	$('#aggregator-content .item .lazy')
+		.visibility({
+			type       : 'image',
+			transition : 'fade in',
+			duration   : 1000
+		});
 
 	$('#aggregator-content')
 		.visibility({
@@ -93,11 +118,9 @@ $(function(){
 					var fragment = document.createDocumentFragment();
 					var item;
 
-					console.log(data);
-
 					if(data.status === 'success' && data.results.length){
-						Parse._.each(data.results, function(i){
-							item = $(template({r: i}));
+						Parse._.each(data.results, function(r, i){
+							item = $(template({r: r}));
 							fragment.appendChild(item[0]);
 						});
 
@@ -118,5 +141,4 @@ $(function(){
 			}
 		});
 });
-
 </script>

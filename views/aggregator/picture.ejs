@@ -3,23 +3,24 @@
 
 <div class="ui container center aligned" id="aggregator-content">
 	<div id="page-top">
+		<a href="/about" class="aAbout" title="نبذة عامة">نبذة عامة</a>
 	</div>
 
 	<div id="page-middle">
 
 		<div>
-			<img src="<%= data.logo %>" />
+			<a href="/" title="Home"><img src="<%= data.logo %>" /></a>
 		</div>
 
 		<div class="ui basic segment item" id="tweet-<%= data.tweet.id %>">
-			<a href="/picture/<%= data.tweet.id %>/<%= data.tweet.text %>" target="_blank">
+			<div class="img-link">
 				<img src="<%= data.tweet.entities.media[0].media_url %>" />
-			</a>
+			</div>
 
 			<h1 class="ui small header"><%- data.tweet.text %></h1>
 
 			<div class="ui left aligned">
-				<a class="ui tiny button" href="https://twitter.com/intent/retweet?tweet_id=<%= data.tweet.id %>">
+				<a class="ui tiny button" href="https://twitter.com/intent/retweet?tweet_id=<%= data.tweet.id %>" target="_blank" title="ريتويت">
 					<i class="retweet icon"></i>
 					<span>ريتويت</span>
 					<span><%= data.tweet.retweet_count %></span>
@@ -27,5 +28,9 @@
 			</div>
 		</div>
 
+	</div>
+
+	<div id="page-bottom">
+		© 2014 جواز سفر. جميع الحقوق محفوظة لأصحابها.
 	</div>
 </div>

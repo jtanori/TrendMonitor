@@ -65,6 +65,7 @@ app.use(function(req, res, next) {
 app.locals._ = _;
 app.locals.PARSE_APP_ID = process.env.PARSE_APP_ID;
 app.locals.PARSE_JS_KEY = process.env.PARSE_JS_KEY;
+app.locals.GA_ACCOUNT = '';
 
 //===============ROUTES===============
 var title = process.env.DEFAULT_PAGE_TITLE;
@@ -353,6 +354,8 @@ Aggregator.get('/', function(req, res){
         options.max_id = req.query.from;
     }
 
+    app.locals.GA_ACCOUNT = keys.ga_account;
+
     //Get twitts for this instance
     aggregator
         .client(config)
@@ -405,6 +408,8 @@ Aggregator.get('/picture/:id/:text', function(req, res){
     };
     var aggregator = new TwitterAggregator();
 
+    app.locals.GA_ACCOUNT = keys.ga_account;
+
     console.log('id', req.params.id);
     //Get twitts for this instance
     aggregator
@@ -434,6 +439,27 @@ Aggregator.get('/picture/:id/:text', function(req, res){
                 data: {title: 'error', error: e}
             });
         });
+});
+
+Aggregator.get('/about', function(req, res){
+    //Define which abuot text we will get
+    var keys = JSON.parse(process.env.TWITTER_PASSPORT_KEYS);
+    var config = {
+        consumer_key: keys.consumer_key,
+        consumer_secret: keys.consumer_secret,
+        access_token_key: keys.consumer_token_key,
+        access_token_secret: keys.consumer_token_secret
+    };
+    var aggregator = new TwitterAggregator();
+
+    app.locals.GA_ACCOUNT = keys.ga_account;
+
+    res.render('aggregator/about', {
+        data: {
+            title: 'About',
+            logo: '/img/fp/logo.png'
+        }
+    });
 });
 
 app.use('/', Aggregator);
