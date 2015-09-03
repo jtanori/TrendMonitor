@@ -335,7 +335,7 @@ function getConfig(hostname){
 
     console.log(config, key);
 
-    if(keys.length && process.env[key]){
+    if(key && process.env[key]){
         return JSON.parse(process.env[key]);
     }else{
         return JSON.parse(process.env.TWITTER_DEFAULT_KEYS);
