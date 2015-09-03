@@ -333,7 +333,7 @@ function getConfig(hostname){
     var config = JSON.parse(process.env.ALLOWED_DOMAINS);
     var key = _.find(config.domains, function(d){console.log(d.name, 'DOMAIN', hostname, d.name === hostname, typeof hostname); return d.name === hostname;});
 
-    console.log(config, keys);
+    console.log(config, key);
 
     if(keys.length && process.env[key]){
         return JSON.parse(process.env[key]);
