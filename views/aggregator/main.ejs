@@ -14,19 +14,18 @@
 
 		<div class="ui segment" id="page-header">
 			<div class="ui three column grid">
-				
 				<div class="ui column">
 					<i class="icon picture large green"></i>
 					<div><%= data.user.statuses_count %> صورة</div>
 				</div>
-				<div class="ui column">
+				<a class="ui column" href="https://twitter.com/<%= data.user.screen_name %>" title="Follow <%= data.user.name %> on Twitter" target="_blank">
 					<i class='icon twitter large blue'></i>
 					<div><%= data.user.followers_count %> متابع</div>
-				</div>
-				<div class="ui column">
+				</a>
+				<a class="ui column" href="https://instagram.com/<%= data.instagram.data.username%>" title="View my photo strem on Instagram" target="_blank">
 					<i class="icon instagram large brown"></i>
-					<div>متابع</div>
-				</div>
+					<div><% if(!_.isEmpty(data.instagram)){ %><%= data.instagram.data.counts.followed_by %><% } %> متابع</div>
+				</a>
 			</div>
 		</div>
 
