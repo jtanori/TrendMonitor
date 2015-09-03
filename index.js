@@ -333,7 +333,7 @@ var Aggregator = express.Router();
 Aggregator.use(logRequest);
 
 Aggregator.get('/', function(req, res){
-    console.log('HOST:', req.headers.host);
+    console.log('HOST:', req.hostname);
     
     var isAjax = req.xhr;
     var keys = JSON.parse(process.env.TWITTER_PASSPORT_KEYS);
