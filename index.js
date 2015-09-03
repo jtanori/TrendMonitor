@@ -331,7 +331,7 @@ app.use('/admin', MonitorAdmin);
 //Aggregator
 function getConfig(hostname){
     var config = JSON.parse(process.env.ALLOWED_DOMAINS);
-    var keys = config.domains.filter(function(d){console.log(d, 'DOMAIN', hostname); return d.name === hostname;});
+    var keys = config.domains.filter(function(d){console.log(d.name, 'DOMAIN', hostname); return d.name === hostname;});
 
     console.log(config, keys);
 
