@@ -13,6 +13,9 @@
 		</div>
 
 		<div class="ui basic segment item" id="tweet-<%= data.tweet.id %>">
+			<% if(data.tweet.number){ %>
+			<div class='img-number'>#<%= data.tweet.number %></div>
+			<% } %>
 			<div class="img-link">
 				<img src="<%= data.tweet.entities.media[0].media_url %>" />
 			</div>

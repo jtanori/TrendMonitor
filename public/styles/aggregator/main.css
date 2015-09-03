@@ -21,6 +21,11 @@ body {
 	color: #666;
 }
 
+#page-header {
+	max-width: 600px;
+	margin: 2rem auto;
+}
+
 #page-middle {
 	box-shadow: 0 0 2px rgba(0,0,0,0.3);
 	background: white;
@@ -54,6 +59,28 @@ body {
     text-align: center;
     max-height: 680px;
     background: #efefef;
+}
+
+#page-middle .item .img-number {
+	position: absolute;
+    padding: 10px;
+    background-color: rgba(0,0,0,0.5);
+    color: white;
+    direction: ltr;
+}
+
+#page-logo,
+#page-logo a {
+	max-height: 100px;
+}
+
+#page-logo a {
+	display: inline-block;
+}
+
+#page-logo img {
+	height: 100px;
+	width: auto;
 }
 
 #page-bottom {

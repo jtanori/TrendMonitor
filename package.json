@@ -16,6 +16,7 @@
     "express-session": "^1.10.2",
     "extend": "^3.0.0",
     "helmet": "^0.6.0",
+    "instagram-node": "^0.5.8",
     "iron_worker": "^0.1.6",
     "lodash": "^3.0.1",
     "mailgun-js": "^0.7.1",

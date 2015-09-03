@@ -26,6 +26,7 @@ var mc = memjs.Client.create(process.env.MEMCACHEDCLOUD_SERVERS, {
 });
 var TwitterAggregator = require('./TwitterAggregator');
 var Autolinker = require( 'autolinker' );
+var ig = require('instagram-node').instagram();
 
 //Initialize Parse
 Parse.initialize(process.env.PARSE_APP_ID, process.env.PARSE_JS_KEY, process.env.PARSE_MASTER_KEY);
@@ -328,15 +329,24 @@ MonitorAdmin.get('/', auth, function(req, res){
 app.use('/admin', MonitorAdmin);
 
 //Aggregator
+function getConfig(hostname){
+    var config = JSON.parse(process.env.ALLOWED_DOMAINS);
+    var keys = config.domains.filter(function(d){return d.name === hostname;});
+
+    if(keys.length && process.env[keys[0]]){
+        return JSON.parse(process.env[key[0]]);
+    }else{
+        return JSON.parse(process.env.TWITTER_DEFAULT_KEYS);
+    }
+}
+
 var Aggregator = express.Router();
 
 Aggregator.use(logRequest);
 
 Aggregator.get('/', function(req, res){
-    console.log('HOST:', req.hostname);
-    
     var isAjax = req.xhr;
-    var keys = JSON.parse(process.env.TWITTER_PASSPORT_KEYS);
+    var keys = getConfig(req.hostname);
     var config = {
         consumer_key: keys.consumer_key,
         consumer_secret: keys.consumer_secret,
@@ -347,7 +357,8 @@ Aggregator.get('/', function(req, res){
     var options = {
         screen_name: keys.account,
         exclude_replies: true, 
-        include_rts: false
+        include_rts: false,
+        count: 5
     };
 
     if(req.query.from){
@@ -356,50 +367,59 @@ Aggregator.get('/', function(req, res){
 
     app.locals.GA_ACCOUNT = keys.ga_account;
 
-    //Get twitts for this instance
-    aggregator
-        .client(config)
-        .getTimeline(options)
-        .then(function(tweets, response){
-            //Parse results
-            var results = tweets.filter(function(r){
-                if(r.entities && r.entities.media && r.entities.media.length){
-                    return r;
-                }
-            }).map(function(t){
-                return {
-                    id: t.id_str, 
-                    text: Autolinker.link(t.text, {twitter: true, newWindow: true, className: 'link'}), 
-                    urlText: t.text.replace(/(?:https?|ftp):\/\/\S+/g, ''),
-                    entities: t.entities,
-                    retweet_count: t.retweet_count
-                };
-            });
-
-            if(isAjax){
-                res.status(200).json({results: results, status: 'success'});
-            }else{
-                res.render('aggregator/main', {
-                    data: {
-                        title: 'aggregator',
-                        results: results,
-                        logo: '/img/fp/logo.png'
+    console.log(keys, 'KEYS');
+    //ig.use({ client_id: keys.instagram_client_id, client_secret: keys.instagram_client_secret });
+    //ig.user(keys.instagram_user, function(err, instagramData, remaining, limit) {
+        //Get twitts for this instance
+        aggregator
+            .client(config)
+            .getTimeline(options)
+            .then(function(tweets, response){
+                //Parse results
+                var results = tweets.filter(function(r){
+                    if(r.entities && r.entities.media && r.entities.media.length){
+                        return r;
                     }
+                }).map(function(t){
+                    return {
+                        id: t.id_str, 
+                        //text: Autolinker.link(t.text, {twitter: true, newWindow: true, className: 'link'}), 
+                        text: t.text.replace(/(?:https?|ftp):\/\/\S+/g, ''),
+                        urlText: t.text.replace(/(?:https?|ftp):\/\/\S+/g, ''),
+                        entities: t.entities,
+                        retweet_count: t.retweet_count
+                    };
                 });
-            }
-        }, function(e){
-            if(isAjax){
-                res.status(400).json(e);
-            }else{
-                res.render('aggregator/error', {
-                    data: {title: 'error', error: e}
-                });
-            }
-        });
+
+                if(isAjax){
+                    res.status(200).json({results: results, status: 'success'});
+                }else{
+                    res.render('aggregator/main', {
+                        data: {
+                            title: keys.name,
+                            results: results,
+                            logo: keys.logo,
+                            content: tweets,
+                            user: tweets[0].user
+                        }
+                    });
+                }
+            }, function(e){
+                if(isAjax){
+                    res.status(400).json(e);
+                }else{
+                    res.render('aggregator/error', {
+                        data: {title: 'error', error: e}
+                    });
+                }
+            });
+    //});
+
+        
 });
 
-Aggregator.get('/picture/:id/:text', function(req, res){
-    var keys = JSON.parse(process.env.TWITTER_PASSPORT_KEYS);
+var getPicture = function(req, res){
+    var keys = getConfig(req.hostname);
     var config = {
         consumer_key: keys.consumer_key,
         consumer_secret: keys.consumer_secret,
@@ -410,7 +430,6 @@ Aggregator.get('/picture/:id/:text', function(req, res){
 
     app.locals.GA_ACCOUNT = keys.ga_account;
 
-    console.log('id', req.params.id);
     //Get twitts for this instance
     aggregator
         .client(config)
@@ -420,14 +439,15 @@ Aggregator.get('/picture/:id/:text', function(req, res){
             if(t && t.entities.media && t.entities.media.length){
                 t = {
                     id: t.id_str, 
-                    text: Autolinker.link(t.text, {twitter: true, newWindow: true, className: 'link'}), 
+                    text: t.text.replace(/(?:https?|ftp):\/\/\S+/g, ''), 
                     urlText: t.text.replace(/(?:https?|ftp):\/\/\S+/g, ''),
                     entities: t.entities,
-                    retweet_count: t.retweet_count
+                    retweet_count: t.retweet_count,
+                    number: req.params.number || false
                 };
 
                 res.render('aggregator/picture', {
-                    data: {tweet: t, title: 'aggregator', logo: '/img/fp/logo.png'}
+                    data: {tweet: t, title: keys.name + ' : ' + t.text, logo: keys.logo}
                 });
             }else{
                 res.render('aggregator/error', {
@@ -439,7 +459,10 @@ Aggregator.get('/picture/:id/:text', function(req, res){
                 data: {title: 'error', error: e}
             });
         });
-});
+};
+
+Aggregator.get('/picture/:id/:text', getPicture);
+Aggregator.get('/picture/:id/:text/:number', getPicture);
 
 Aggregator.get('/about', function(req, res){
     //Define which abuot text we will get
