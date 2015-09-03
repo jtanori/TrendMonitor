@@ -331,12 +331,12 @@ app.use('/admin', MonitorAdmin);
 //Aggregator
 function getConfig(hostname){
     var config = JSON.parse(process.env.ALLOWED_DOMAINS);
-    var keys = config.domains.filter(function(d){console.log(d.name, 'DOMAIN', hostname); return d.name === hostname;});
+    var key = _.find(config.domains, function(d){console.log(d.name, 'DOMAIN', hostname, d.name === hostname, typeof hostname); return d.name === hostname;});
 
     console.log(config, keys);
 
-    if(keys.length && process.env[keys[0]]){
-        return JSON.parse(process.env[key[0]]);
+    if(keys.length && process.env[key]){
+        return JSON.parse(process.env[key]);
     }else{
         return JSON.parse(process.env.TWITTER_DEFAULT_KEYS);
     }
