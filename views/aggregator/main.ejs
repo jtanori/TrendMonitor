@@ -34,11 +34,11 @@
 			
 			<div class="ui basic segment item" id="tweet-<%= r.id %>">
 				<div class='img-number'>#<%= data.user.statuses_count - i %></div>
-				<a href="/picture/<%= r.id %>/<%= r.urlText %>/<%= data.user.statuses_count - i %>" target="_blank" class="img-link" title="">
+				<a href="/picture/<%= r.id %>/<%= r.urlText %>/<%= data.user.statuses_count - i %>" target="_blank" class="img-link" title="Open picture <%= r.text %>">
 					<% if(i >= 5) { %>
-						<img data-src="<%= r.entities.media[0].media_url %>" class="lazy" alt=""/>
+						<img data-src="<%= r.entities.media[0].media_url %>" class="lazy" alt="<%= r.text %>"/>
 					<% } else { %>
-						<img src="<%= r.entities.media[0].media_url %>" alt=""/>
+						<img data-src="<%= r.entities.media[0].media_url %>" class="lazy" alt="<%= r.text %>"/>
 					<% } %>
 				</a>
 
@@ -72,7 +72,7 @@
 	<div class="ui basic segment item" id="tweet-{{ r.id }}">
 		<div class='img-number'>#{{ r.n }}</div>
 		<a href="/picture/{{ r.id }}/{{ r.urlText }}/{{ r.n }}" target="_blank" class="img-link" title="">
-			<img src="{{ r.entities.media[0].media_url }}" />
+			<img data-src="{{ r.entities.media[0].media_url }}" />
 		</a>
 
 		<h1 class="ui small header">{{ r.text }}</h1>
@@ -95,7 +95,7 @@ $(function(){
     };
 
 	var $loader = $('#loader');
-	var lastId = '<%= _.last(data.results).id - 1 %>';
+	var lastId = '<%= _.last(data.results).id %>';
 	var isLoading = false;
 	var template = Parse._.template($('#item-template').html());
 	var $container = $('#page-middle');
@@ -107,7 +107,6 @@ $(function(){
 			initialCheck: false,
 			onTopVisible: function(){
 				ga('send', 'pageview');
-				console.log('send pageview');
 			}
 		});
 
@@ -149,10 +148,17 @@ $(function(){
 								ids.push(r.id);
 							}
 						});
-
+						//Set where we are at
 						lastId = Parse._.last(data.results).id;
-
+						//append content
 						$container.append(fragment);
+						//Lazy load images
+						$container.find('img:not([src])')
+							.visibility({
+								type       : 'image',
+								transition : 'fade in',
+								duration   : 1000
+							});
 					}else{
 
 					}

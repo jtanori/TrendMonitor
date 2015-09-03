@@ -332,7 +332,7 @@ app.use('/admin', MonitorAdmin);
 function getConfig(hostname){
     var config = JSON.parse(process.env.ALLOWED_DOMAINS);
     var key = _.find(config.domains, function(d){return d.name === hostname;});
-    
+
     if(key && process.env[key.configKey]){
         return JSON.parse(process.env[key.configKey]);
     }else{
@@ -363,6 +363,7 @@ Aggregator.get('/', function(req, res){
 
     if(req.query.from){
         options.max_id = req.query.from;
+        options.count = options.count + 1;//This because twitter will include the max_id twit and we may don't need that
     }
 
     app.locals.GA_ACCOUNT = keys.ga_account;
