@@ -17,10 +17,10 @@
     <script src="//www.parsecdn.com/js/parse-1.5.0.min.js"></script>
 
     <script>
-        App = {parse: {APP_ID: '<%= PARSE_APP_ID %>', JS_KEY: '<%= PARSE_JS_KEY %>'}, views: {}};
+        App = {parse: {APP_ID: '<%= PARSE_APP_ID %>', JS_KEY: '<%= PARSE_JS_KEY %>'}, views: {}, phones: <%= LAYOUT === 'phones' %>};
     </script>
   </head>
-  <body>
+  <body class="<%= LAYOUT %>">
     <!--[if lt IE 10]>
       <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
     <![endif]-->

@@ -12,7 +12,7 @@
 			<a href="/" title="Home"><img src="<%= data.logo %>" /></a>
 		</div>
 
-		<div class="ui segment" id="page-header">
+		<div class="ui segment <% if(LAYOUT === 'phones'){ %>basic<% } %>" id="page-header">
 			<div class="ui three column grid">
 				<div class="ui column">
 					<i class="icon picture large green"></i>
@@ -33,7 +33,7 @@
 			
 			<div class="ui basic segment item" id="tweet-<%= r.id %>">
 				<div class='img-number'>#<%= data.user.statuses_count - i %></div>
-				<a href="/picture/<%= r.id %>/<%= r.urlText %>/<%= data.user.statuses_count - i %>" target="_blank" class="img-link" title="Open picture <%= r.text %>">
+				<a href="/picture/<%= r.id %>/<%= encodeURIComponent(r.urlText) %>/<%= data.user.statuses_count - i %>" target="_blank" class="img-link" title="Open picture <%= r.text %>">
 					<% if(i >= 5) { %>
 						<img data-src="<%= r.entities.media[0].media_url %>" class="lazy" alt="<%= r.text %>"/>
 					<% } else { %>
@@ -49,12 +49,18 @@
 						<span>ريتويت</span>
 						<span><%= r.retweet_count %></span>
 					</a>
-					<% if(LAYOUT === 'phones') { %>
-					<a class="ui tiny icon button icon-left instagram">
+				</div>
+
+				<% if(LAYOUT === 'phones') { %>
+				<div class="ui hidden divider"></div>
+				<div class="ui center aligned">
+					<a href="whatsapp://send?text=<%= encodeURIComponent(r.urlText) %>+<%= data.host %>/picture/<%= r.id %>/<%= r.urlText %>/<%= data.user.statuses_count - i %>" class="ui whatsapp large yellow fluid button">
+						<i class="whatsapp icon"></i>
 						Share
 					</a>
-					<% } %>
 				</div>
+				<div class="ui divider"></div>
+				<% } %>
 			</div>
 			
 			<% if((i+1)%5 === 0){ %>
@@ -75,7 +81,7 @@
 <div id="item-template" hidden>
 	<div class="ui basic segment item" id="tweet-{{ r.id }}">
 		<div class='img-number'>#{{ r.n }}</div>
-		<a href="/picture/{{ r.id }}/{{ r.urlText }}/{{ r.n }}" target="_blank" class="img-link" title="">
+		<a href="/picture/{{ r.id }}/{{ encodeURIComponent(r.urlText) }}/{{ r.n }}" target="_blank" class="img-link" title="">
 			<img data-src="{{ r.entities.media[0].media_url }}" />
 		</a>
 
@@ -88,6 +94,17 @@
 				<span>{{ r.retweet_count }}</span>
 			</a>
 		</div>
+
+		{% if(r.phones) { %}
+		<div class="ui hidden divider"></div>
+		<div class="ui center aligned">
+			<a href="whatsapp://send?text={{ encodeURIComponent(r.urlText) }}+{{ window.location.href }}/picture/{{ r.id }}/{{ encodeURIComponent(r.urlText) }}/{{ r.n }}" class="ui whatsapp large yellow fluid button">
+				<i class="whatsapp icon"></i>
+				Share
+			</a>
+		</div>
+		<div class="ui divider"></div>
+		{% } %}
 	</div>
 </div>
 <script>
@@ -147,7 +164,7 @@ $(function(){
 						Parse._.each(data.results, function(r, i){
 							if(ids.indexOf(r.id) === -1){
 								currentPic = currentPic - 1;
-								item = $(template({r: Parse._.extend(r, {n: currentPic})}));
+								item = $(template({r: Parse._.extend(r, {n: currentPic, phones: App.phones})}));
 								fragment.appendChild(item[0]);
 								ids.push(r.id);
 							}

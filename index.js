@@ -399,7 +399,13 @@ var getPicture = function(req, res){
 
                 var render = function(){
                     res.render('aggregator/picture', {
-                        data: {tweet: t, title: keys.name + ' : ' + t.text, logo: keys.logo, instagram: _.extend({}, instagramData, {username: keys.instagram_user})}
+                        data: {
+                            tweet: t, 
+                            title: keys.name + ' : ' + t.text, 
+                            logo: keys.logo, 
+                            instagram: _.extend({}, instagramData, {username: keys.instagram_user}),
+                            host: req.hostname
+                        }
                     });
                 }
 
@@ -483,7 +489,8 @@ Aggregator.get('/', function(req, res){
                             logo: keys.logo,
                             content: tweets,
                             user: tweets[0].user,
-                            instagram: _.extend({}, instagramData, {username: keys.instagram_user})
+                            instagram: _.extend({}, instagramData, {username: keys.instagram_user}),
+                            host: req.hostname
                         }
                     });
                 }
