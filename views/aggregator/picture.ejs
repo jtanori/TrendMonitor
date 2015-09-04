@@ -29,6 +29,16 @@
 					<span><%= data.tweet.retweet_count %></span>
 				</a>
 			</div>
+
+			<% if(LAYOUT === 'phones') { %>
+			<div class="ui hidden divider"></div>
+			<div class="ui center aligned">
+				<a href="whatsapp://send?text=<%= encodeURIComponent(data.tweet.urlText) %>+<%= data.host %>/picture/<%= data.tweet.id %>/<%= encodeURIComponent(data.tweet.urlText) %>/<%= data.tweet.number %>" class="ui whatsapp large yellow fluid button">
+					<i class="whatsapp icon"></i>
+					Share
+				</a>
+			</div>
+			<% } %>
 		</div>
 
 	</div>

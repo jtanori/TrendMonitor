@@ -54,7 +54,7 @@
 				<% if(LAYOUT === 'phones') { %>
 				<div class="ui hidden divider"></div>
 				<div class="ui center aligned">
-					<a href="whatsapp://send?text=<%= encodeURIComponent(r.urlText) %>+<%= data.host %>/picture/<%= r.id %>/<%= r.urlText %>/<%= data.user.statuses_count - i %>" class="ui whatsapp large yellow fluid button">
+					<a href="whatsapp://send?text=<%= encodeURIComponent(r.urlText) %>+<%= data.host %>/picture/<%= r.id %>/<%= encodeURIComponent(r.urlText) %>/<%= data.user.statuses_count - i %>" class="ui whatsapp large yellow fluid button">
 						<i class="whatsapp icon"></i>
 						Share
 					</a>
