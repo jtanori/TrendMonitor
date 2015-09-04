@@ -22,9 +22,9 @@
 					<i class='icon twitter large blue'></i>
 					<div><%= data.user.followers_count %> متابع</div>
 				</a>
-				<a class="ui column" href="https://instagram.com/<%= data.instagram.data.username%>" title="View my photo strem on Instagram" target="_blank">
+				<a class="ui column" href="https://instagram.com/<%= data.instagram.username %>" title="View my photo strem on Instagram" target="_blank">
 					<i class="icon instagram large brown"></i>
-					<div><% if(!_.isEmpty(data.instagram)){ %><%= data.instagram.data.counts.followed_by %><% } %> متابع</div>
+					<div><% if(!_.isEmpty(data.instagram.data)){ %><%= data.instagram.data.counts.followed_by %><% } %> متابع</div>
 				</a>
 			</div>
 		</div>
@@ -49,6 +49,11 @@
 						<span>ريتويت</span>
 						<span><%= r.retweet_count %></span>
 					</a>
+					<% if(LAYOUT === 'phones') { %>
+					<a class="ui tiny icon button icon-left instagram">
+						Share
+					</a>
+					<% } %>
 				</div>
 			</div>
 			

@@ -69,6 +69,7 @@ app.locals._ = _;
 app.locals.PARSE_APP_ID = process.env.PARSE_APP_ID;
 app.locals.PARSE_JS_KEY = process.env.PARSE_JS_KEY;
 app.locals.GA_ACCOUNT = '';
+app.locals.LAYOUT = '';
 
 //===============ROUTES===============
 var title = process.env.DEFAULT_PAGE_TITLE;
@@ -89,13 +90,13 @@ var checkEnvironment = function(req, res, next) {
     var device = getDeviceExtension(req.headers['user-agent']);
     switch (device) {
         case 'phones':
-            app.locals.LAYOUT = LAYOUT = 'phones';
+            app.locals.LAYOUT = 'phones';
             break;
         case 'tablets':
-            app.locals.LAYOUT = LAYOUT = 'tablets';
+            app.locals.LAYOUT = 'tablets';
             break;
         default:
-            app.locals.LAYOUT = LAYOUT = 'main';
+            app.locals.LAYOUT = 'main';
             break;
     }
 
@@ -353,7 +354,12 @@ function getInstagramData(userId, accessToken){
             });
 
             res.on('end', function(){
-                resolve(JSON.parse(body));
+                try{
+                    resolve(JSON.parse(body));
+                }catch(e){
+                    reject(e);
+                }
+                
             });
 
         }).on('error', function(e) {
@@ -393,7 +399,7 @@ var getPicture = function(req, res){
 
                 var render = function(){
                     res.render('aggregator/picture', {
-                        data: {tweet: t, title: keys.name + ' : ' + t.text, logo: keys.logo, instagram: instagramData}
+                        data: {tweet: t, title: keys.name + ' : ' + t.text, logo: keys.logo, instagram: _.extend({}, instagramData, {username: keys.instagram_user})}
                     });
                 }
 
@@ -418,6 +424,7 @@ var getPicture = function(req, res){
 var Aggregator = express.Router();
 
 Aggregator.use(logRequest);
+Aggregator.use(checkEnvironment);
 
 Aggregator.get('/', function(req, res){
     var isAjax = req.xhr;
@@ -435,7 +442,7 @@ Aggregator.get('/', function(req, res){
         include_rts: false,
         count: 5
     };
-    var instagramData;
+    var instagramData = {};
 
     if(req.query.from){
         options.max_id = req.query.from;
@@ -476,7 +483,7 @@ Aggregator.get('/', function(req, res){
                             logo: keys.logo,
                             content: tweets,
                             user: tweets[0].user,
-                            instagram: instagramData
+                            instagram: _.extend({}, instagramData, {username: keys.instagram_user})
                         }
                     });
                 }
