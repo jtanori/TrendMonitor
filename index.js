@@ -85,6 +85,8 @@ var getDeviceExtension = function(ua) {
 };
 
 var checkEnvironment = function(req, res, next) {
+    console.log('check environment');
+    console.log(req.hostname);
     // Since the session check is performed in all routes we can
     // also configure the layout
     var device = getDeviceExtension(req.headers['user-agent']);
@@ -315,7 +317,8 @@ MonitorAdmin.get('/', auth, function(req, res){
             res.render('admin', {
                 data: {
                     title: 'TTM',
-                    keywords: keywords
+                    keywords: keywords,
+                    page: 'monitor'
                 }
             });
         })
@@ -323,7 +326,8 @@ MonitorAdmin.get('/', auth, function(req, res){
             res.render('admin', {
                 data: {
                     title: 'TTM',
-                    keywords: keywords
+                    keywords: keywords,
+                    page: 'monitor'
                 }
             });
         });
@@ -331,7 +335,12 @@ MonitorAdmin.get('/', auth, function(req, res){
 
 app.use('/admin', MonitorAdmin);
 
+// -------------------------------------
 //Aggregator
+
+//Store queries
+var queries = {};
+
 function getConfig(hostname){
     var config = JSON.parse(process.env.ALLOWED_DOMAINS);
     var key = _.find(config.domains, function(d){return d.name === hostname;});
@@ -369,7 +378,7 @@ function getInstagramData(userId, accessToken){
 }
 
 var getPicture = function(req, res){
-    var keys = getConfig(req.hostname);
+    var keys = req.agg.config
     var config = {
         consumer_key: keys.consumer_key,
         consumer_secret: keys.consumer_secret,
@@ -397,24 +406,15 @@ var getPicture = function(req, res){
                     number: req.params.number || false
                 };
 
-                var render = function(){
-                    res.render('aggregator/picture', {
-                        data: {
-                            tweet: t, 
-                            title: keys.name + ' : ' + t.text, 
-                            logo: keys.logo, 
-                            instagram: _.extend({}, instagramData, {username: keys.instagram_user}),
-                            host: req.hostname
-                        }
-                    });
-                }
-
-                //Get instagram data
-                getInstagramData(keys.instagram_user_id, keys.instagram_access_token)
-                    .then(function(data){
-                        instagramData = data;
-                        render();
-                    }, render);
+                res.render('aggregator/picture', {
+                    data: {
+                        tweet: t, 
+                        title: t.text  + ' - ' + keys.name,
+                        description: keys.page_description,
+                        logo: keys.logo.url,
+                        host: req.hostname
+                    }
+                });
             }else{
                 res.render('aggregator/error', {
                     data: {title: 'error', error: 'Not a picture tweet'}
@@ -427,14 +427,40 @@ var getPicture = function(req, res){
         });
 };
 
+var fetchConfig = function(req, res, next){
+    var AGGConfig = Parse.Object.extend('AGG_config');
+    var query;
+
+    if(!queries[req.hostname]){
+        query = queries[req.hostname] = new Parse.Query(AGGConfig);
+    }else{
+        query = queries[req.hostname];
+    }
+
+    //Save request config
+    req.agg = {config: undefined, error: undefined};
+
+    query
+        .containedIn('domains', [req.hostname])
+        .first()
+        .then(function(d){
+            req.agg.config = d.toJSON();
+            next();
+        }, function(e){
+            console.log('CONFIG NOT FOUND FOR AGGREGATOR');
+            console.log(e);
+            res.redirect(404, '/not-found');
+        });
+};
+
 var Aggregator = express.Router();
 
 Aggregator.use(logRequest);
 Aggregator.use(checkEnvironment);
 
-Aggregator.get('/', function(req, res){
+Aggregator.get('/', fetchConfig, function(req, res){
     var isAjax = req.xhr;
-    var keys = getConfig(req.hostname);
+    var keys = req.agg.config;
     var config = {
         consumer_key: keys.consumer_key,
         consumer_secret: keys.consumer_secret,
@@ -469,7 +495,7 @@ Aggregator.get('/', function(req, res){
                 }
             }).map(function(t){
                 return {
-                    id: t.id_str, 
+                    id: t.id_str,
                     //text: Autolinker.link(t.text, {twitter: true, newWindow: true, className: 'link'}), 
                     text: t.text.replace(/(?:https?|ftp):\/\/\S+/g, ''),
                     urlText: t.text.replace(/(?:https?|ftp):\/\/\S+/g, ''),
@@ -484,9 +510,10 @@ Aggregator.get('/', function(req, res){
                 }else{
                     res.render('aggregator/main', {
                         data: {
-                            title: keys.name,
+                            title: keys.page_title,
+                            description: keys.page_description,
                             results: results,
-                            logo: keys.logo,
+                            logo: keys.logo.url,
                             content: tweets,
                             user: tweets[0].user,
                             instagram: _.extend({}, instagramData, {username: keys.instagram_user}),
@@ -496,12 +523,18 @@ Aggregator.get('/', function(req, res){
                 }
             }
 
-            //Get instagram data
-            getInstagramData(keys.instagram_user_id, keys.instagram_access_token)
-                .then(function(data){
-                    instagramData = data;
-                    render();
-                }, render);
+            if(isAjax){
+                render();
+            }else if(keys.instagram_user_id && keys.instagram_access_token){
+                //Get instagram data
+                getInstagramData(keys.instagram_user_id, keys.instagram_access_token)
+                    .then(function(data){
+                        instagramData = data;
+                        render();
+                    }, render);
+            }else{
+                render();
+            }
         }, function(e){
             if(isAjax){
                 res.status(400).json(e);
@@ -513,31 +546,52 @@ Aggregator.get('/', function(req, res){
         });
 });
 
-Aggregator.get('/picture/:id/:text', getPicture);
-Aggregator.get('/picture/:id/:text/:number', getPicture);
+Aggregator.get('/picture/:id/:text', fetchConfig, getPicture);
+Aggregator.get('/picture/:id/:text/:number', fetchConfig, getPicture);
 
-Aggregator.get('/about', function(req, res){
-    //Define which abuot text we will get
-    var keys = JSON.parse(process.env.TWITTER_PASSPORT_KEYS);
-    var config = {
-        consumer_key: keys.consumer_key,
-        consumer_secret: keys.consumer_secret,
-        access_token_key: keys.consumer_token_key,
-        access_token_secret: keys.consumer_token_secret
-    };
-    var aggregator = new TwitterAggregator();
+Aggregator.get('/about', fetchConfig, function(req, res){
+    var config = req.agg.config;
 
-    app.locals.GA_ACCOUNT = keys.ga_account;
+    app.locals.GA_ACCOUNT = config.ga_account;
 
     res.render('aggregator/about', {
         data: {
             title: 'About',
-            logo: '/img/fp/logo.png'
+            logo: config.logo.url,
+            text: config.about
         }
     });
 });
 
 app.use('/', Aggregator);
+
+var AggregatorAdmin = express.Router();
+
+AggregatorAdmin.get('/', function(req, res){
+    var AGGConfig = Parse.Object.extend('AGG_config');
+    var query = new Parse.Query(AGGConfig);
+
+    query
+        .find()
+        .then(function(a){
+            res.render('admin/aggregator', {
+                data: {
+                    title: 'Aggregator Admin',
+                    clients: a,
+                    page: 'aggregator'
+                }
+            });
+        }, function(e){
+            res.render('admin/aggregator-error', {
+                data: {
+                    title: 'Aggregator Admin',
+                    error: e
+                }
+            });
+        });
+});
+
+app.use('/admin/aggregator', AggregatorAdmin);
 
 //Default route, blank
 app.get('*', function(req, res){

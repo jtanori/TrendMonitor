@@ -41,9 +41,7 @@ TwitterAggregator.prototype.getTweet = function(id){
 
 	return new Promise(function(resolve, reject){
 		client.get('statuses/show/', id, function(err, tweet, response){
-			console.log(arguments, 'tweet');
 			if(err){
-				console.log('error', err);
 				reject(err);
 			}else{
 				resolve(tweet, response);

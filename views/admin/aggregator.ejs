@@ -1,0 +1,265 @@
+<% layout('../layouts/main') -%>
+<% stylesheet('/styles/admin/main.css') -%>
+<% script('//ajax.googleapis.com/ajax/libs/angularjs/1.4.5/angular.min.js') -%>
+<% script('/scripts/admin/aggregator.js') -%>
+
+<% include menu %>
+
+<script>
+	var clients = <%- JSON.stringify(data.clients) %>;
+</script>
+
+<div ng-controller="AggregatorCtrl">
+	
+	<div class="ui left fixed vertical menu" id='admin-main-sidebar'>
+		<div class="item">
+			Clients
+		</div>
+		<a class="ui item" ng-class="{active: c.name == client.name}" href="#client/{{c.objectId}}" ng-click="onClick(c)" ng-repeat="c in clients">
+			{{ c.name }}
+		</a>
+	</div>
+
+	<div class="ui container basic segment" id="admin-main-content">
+		<div class="ui secondary pointing grey menu">
+			<a class="item" ng-repeat="tab in tabs" ng-class="{active:currentTab == tab.id}" ng-click="onTab(tab.id)">
+				<i class="{{tab.icon}} icon"></i> {{tab.title}}
+			</a>
+		</div>
+
+		<div class="ui tab" ng-repeat="tab in tabs" ng-class="{active:currentTab == tab.id}">
+			<div ng-include="tab.id"></div>
+		</div>
+	</div>
+
+	<div class="ui dimmer" ng-class="{active: saving}">
+		<div class="ui text loader">Saving</div>
+	</div>
+
+</div>
+
+<script type="text/ng-template" id="settings">
+	<form id="settings" class="ui form" name="settingsForm" ng-submit="save(settingsForm)">
+		<h4 class="ui dividing header"><i class="wrench icon"></i> Page Config</h4>
+		<div class="field">
+			<div class="two fields">
+				<div class="ui field">
+					<label>
+						Aggregator Name
+						<input ng-model="client.name" type="text" required class="fluid input" />
+					</label>
+				</div>
+				
+				<div class="ui field">
+					<label>
+						Google Analytics ID
+						<input ng-model="client.ga_account" type="text" required class="fluid input" />
+					</label>
+				</div>
+			</div>
+		</div>
+		<div class="field">
+			<div class="two fields">
+				<div class="ui field">
+					<label>
+						Page Title
+						<input ng-model="client.page_title" type="text" required class="fluid input" />
+					</label>
+				</div>
+
+				<div class="ui field">
+					<label>
+						Page Description
+						<input ng-model="client.page_description" type="text" required class="fluid input" />
+					</label>
+				</div>
+			</div>
+		</div>
+
+		<h4 class="ui dividing header"><i class="twitter icon"></i> Twitter</h4>
+		<div class="field">
+			<div class="ui labeled input">
+				<div class="ui label">
+				@
+				</div>
+				<input type="text" placeholder="Twitter Username" ng-model="client.account" />
+			</div>
+		</div>
+		<div class="field">
+			<div class="two fields">
+				<div class="ui field">
+					<label>
+						Consumer Key
+						<input ng-model="client.consumer_key" type="text" required class="fluid input" />
+					</label>
+				</div>
+
+				<div class="ui field">
+					<label>
+						Consumer Secret
+						<input ng-model="client.consumer_secret" type="text" required class="fluid input" />
+					</label>
+				</div>
+			</div>
+		</div>
+		<div class="field">
+			<div class="two fields">
+				<div class="ui field">
+					<label>
+						Consumer Token Key
+						<input ng-model="client.consumer_token_key" type="text" required class="fluid input" />
+					</label>
+				</div>
+
+				<div class="ui field">
+					<label>
+						Consumer Token Secret
+						<input ng-model="client.consumer_token_secret" type="text" required class="fluid input" />
+					</label>
+				</div>
+			</div>
+		</div>
+
+		<h4 class="ui dividing header"><i class="instagram icon"></i> Instagram<div class="sub header">Leaving this blank will prevent from fetching followers from instagram</div></h4>
+		<div class="field">
+			<div class="ui labeled input">
+				<div class="ui label">
+				@
+				</div>
+				<input type="text" placeholder="instagram Username" ng-model="client.instagram_user" />
+			</div>
+		</div>
+		<div class="field">
+			<div class="two fields">
+				<div class="ui field">
+					<label>
+						User ID
+						<input ng-model="client.instagram_user_id" type="text" class="fluid input" />
+					</label>
+				</div>
+
+				<div class="ui field">
+					<label>
+						Access Token
+						<input ng-model="client.instagram_access_token" type="text" class="fluid input" />
+					</label>
+				</div>
+			</div>
+		</div>
+		<div class="ui right aligned basic segment">
+			<button type="submit" class="ui button right aligned" ng-disabled="!settingsForm.$dirty">Save</button>
+		</div>
+	</form>
+</script>
+
+<script type="text/ng-template" id="twitter">
+	<div id="tweets">
+		tweets
+	</div>
+</script>
+
+<script type="text/ng-template" id="about">
+	<form id="about" name="aboutForm" ng-submit="save(aboutForm)">
+		<div class="ui two column padded equal height grid">
+			<div class="ui column">
+				<div class="ui header"><i class="code icon"></i> <div class='content'>HTML<div class="sub header">Write your HTML in the textarea below</div></div></div>
+				<textarea class="ui fluid segment" ng-model="$parent.client.about" required name="about">{{ $parent.client.about }}</textarea>
+			</div>
+			<div class="ui column">
+				<div class="ui header"><i class="file text icon"></i> <div class='content'>Output<div class="sub header">This is what your text may look like in the website</div></div></div>
+				<div class="ui segment" ng-bind-html="$parent.getAbout()"></div>
+			</div>
+		</div>
+		<div class="ui right aligned basic segment">
+			<button type="submit" class="ui button right aligned">Save</button>
+		</div>
+	</form>
+</script>
+<script>
+$(function(){
+	Parse.initialize(App.parse.APP_ID, App.parse.JS_KEY);
+	/*
+	Parse._.templateSettings = {
+        interpolate: /\{\{(.+?)\}\}/g,
+        evaluate: /\{\%(.+?)\%\}/g
+    };
+
+	var Home = Parse.View.extend({
+		el: '#keywords',
+		keywordTemplate: Parse._.template('<span class="ui label" data-id="{{ k.id }}" dir="auto">{{ k.name }} <i class="icon close"></i></span>'),
+		events: {
+			'click .label .close': 'remove',
+			'click #form-submit': 'submit',
+			'submit': 'save'
+		},
+		initialize: function(){
+			return this.render();
+		},
+		render: function(){
+
+			this.dom = {};
+			this.dom.form = this.$el.find('form');
+			this.dom.keywords = this.$el.find('.labels');
+
+			this.dom.form.form({
+				fields: {
+					keyword: {
+						identifier: 'keyword',
+						rules: [
+							{
+								type: 'length[2]',
+								prompt: 'Keyword must be at least 2 chars length'
+							}
+						]
+					}
+				}
+			});
+
+			return this;
+		},
+		submit: function(){
+			this.dom.form.submit();
+		},
+		remove: function(e){
+			var $target = $(e.currentTarget).parent();
+			var id = $target.attr('data-id');
+			var Trend = Parse.Object.extend('Trend');
+			var trend = new Trend({id: id});
+
+			trend.destroy();
+			$target.remove();
+		},
+		save: function(e){
+			if(e && e.preventDefault){
+				e.preventDefault();
+			}
+
+			var isValid = this.dom.form.form('validate form');
+			var values = this.dom.form.form('get values');
+
+			var Trend = Parse.Object.extend('Trend');
+			var trend = new Trend({name: values.keyword, active: true});
+
+			var form = this.dom.form;
+			var keywords = this.dom.keywords;
+			var template = this.keywordTemplate;
+
+			form.addClass('loading');
+
+			trend
+				.save()
+				.then(function(){
+					keywords.append(template({k: {name: trend.get('name'), id: trend.id}}));
+					form.form('reset form');
+				})
+				.fail(function(){
+					alert('An error has occurred, please try again');
+				})
+				.always(function(){
+					form.removeClass('loading');
+				})
+		}
+	});*/
+
+});
+</script>

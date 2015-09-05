@@ -1,0 +1,28 @@
+#admin-main-content {
+	padding-top:43px;
+}
+
+#admin-main-sidebar {
+	top: 54px;
+}
+
+#admin-main-sidebar .item {
+	text-transform: capitalize;
+}
+
+#admin-main-sidebar + #admin-main-content {
+	position: absolute;
+	left: 200px;
+	top: 54px;
+	bottom: 0;
+	overflow: scroll;
+	right: 0;
+	padding-top: inherit;
+	margin: 0;
+}
+
+#admin-main-content #about .column .segment {
+	margin-top:0;
+	width: 100%;
+	min-height: 300px;
+}

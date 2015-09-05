@@ -1,6 +1,9 @@
 <% layout('./layouts/main') -%>
+<% stylesheet('/styles/admin/main.css') -%>
 
-<div class="ui raised padded container basic segment">
+<% include admin/menu %>
+
+<div class="ui raised padded container basic segment" id="admin-main-content">
 	<h1 class="ui center aligned blue header">
 		Manage your keywords
 	</h1>
