@@ -13,8 +13,8 @@
 		</div>
 
 		<div class="ui basic segment item" id="tweet-<%= data.tweet.id %>">
-			<% if(data.tweet.number){ %>
-			<div class='img-number'>#<%= data.tweet.number %></div>
+			<% if(data.tweet.index){ %>
+			<div class='img-number'>#<%= data.tweet.index %></div>
 			<% } %>
 			<div class="img-link">
 				<img src="<%= data.tweet.entities.media[0].media_url %>" />
@@ -33,7 +33,7 @@
 			<% if(LAYOUT === 'phones') { %>
 			<div class="ui hidden divider"></div>
 			<div class="ui center aligned">
-				<a href="whatsapp://send?text=<%= encodeURIComponent(data.tweet.urlText) %>+<%= data.host %>/picture/<%= data.tweet.id %>/<%= encodeURIComponent(data.tweet.urlText) %>/<%= data.tweet.number %>" class="ui whatsapp large yellow fluid button">
+				<a href="whatsapp://send?text=<%= encodeURIComponent(data.tweet.urlText) %>+<%= data.host %>/p/<%= data.tweet.index %>" class="ui whatsapp large yellow fluid button">
 					<i class="whatsapp icon"></i>
 					Share
 				</a>

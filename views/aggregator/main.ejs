@@ -32,8 +32,8 @@
 		<% data.results.forEach(function(r, i){ %>
 			
 			<div class="ui basic segment item" id="tweet-<%= r.id %>">
-				<div class='img-number'>#<%= data.user.statuses_count - i %></div>
-				<a href="/picture/<%= r.id %>/<%= encodeURIComponent(r.urlText) %>/<%= data.user.statuses_count - i %>" target="_blank" class="img-link" title="Open picture <%= r.text %>">
+				<div class='img-number'>#<%= r.index %></div>
+				<a href="/picture/<%= r.id %>/<%= encodeURIComponent(r.urlText) %>/<%= r.index %>" target="_blank" class="img-link" title="Open picture <%= r.text %>">
 					<% if(i >= 5) { %>
 						<img data-src="<%= r.entities.media[0].media_url %>" class="lazy" alt="<%= r.text %>"/>
 					<% } else { %>
@@ -54,7 +54,7 @@
 				<% if(LAYOUT === 'phones') { %>
 				<div class="ui hidden divider"></div>
 				<div class="ui center aligned">
-					<a href="whatsapp://send?text=<%= encodeURIComponent(r.urlText) %>+<%= data.host %>/picture/<%= r.id %>/<%= encodeURIComponent(r.urlText) %>/<%= data.user.statuses_count - i %>" class="ui whatsapp large yellow fluid button">
+					<a href="whatsapp://send?text=<%= encodeURIComponent(r.urlText) %>+<%= data.host %>/p/<%= r.index %>" class="ui whatsapp large yellow fluid button">
 						<i class="whatsapp icon"></i>
 						Share
 					</a>
@@ -80,8 +80,8 @@
 
 <div id="item-template" hidden>
 	<div class="ui basic segment item" id="tweet-{{ r.id }}">
-		<div class='img-number'>#{{ r.n }}</div>
-		<a href="/picture/{{ r.id }}/{{ encodeURIComponent(r.urlText) }}/{{ r.n }}" target="_blank" class="img-link" title="">
+		<div class='img-number'>#{{ r.index }}</div>
+		<a href="/picture/{{ r.id }}/{{ encodeURIComponent(r.urlText) }}/{{ r.index }}" target="_blank" class="img-link" title="">
 			<img data-src="{{ r.entities.media[0].media_url }}" />
 		</a>
 
@@ -98,7 +98,7 @@
 		{% if(r.phones) { %}
 		<div class="ui hidden divider"></div>
 		<div class="ui center aligned">
-			<a href="whatsapp://send?text={{ encodeURIComponent(r.urlText) }}+{{ window.location.href }}/picture/{{ r.id }}/{{ encodeURIComponent(r.urlText) }}/{{ r.n }}" class="ui whatsapp large yellow fluid button">
+			<a href="whatsapp://send?text={{ encodeURIComponent(r.urlText) }}+{{ window.location.href }}p/{{ r.index }}" class="ui whatsapp large yellow fluid button">
 				<i class="whatsapp icon"></i>
 				Share
 			</a>
@@ -122,6 +122,7 @@ $(function(){
 	var $container = $('#page-middle');
 	var currentPic = <%= data.user.statuses_count - data.results.length + 1 %>;
 	var ids = "<%= data.results.map(function(r){return r.id}) %>".split(',');
+	var index = <%= _.last(data.results).index %>;
 
 	$('#aggregator-content .page-count')
 		.visibility({
@@ -153,7 +154,7 @@ $(function(){
 				$loader.addClass('active');
 				$.ajax({
 					url: '/',
-					data: {from: lastId},
+					data: {from: lastId, index: index},
 					dataType: 'json'
 				})
 				.then(function(data){
@@ -171,6 +172,7 @@ $(function(){
 						});
 						//Set where we are at
 						lastId = Parse._.last(data.results).id;
+						index = Parse._.last(data.results).index;
 						//append content
 						$container.append(fragment);
 						//Lazy load images

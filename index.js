@@ -461,6 +461,7 @@ Aggregator.use(checkEnvironment);
 Aggregator.get('/', fetchConfig, function(req, res){
     var isAjax = req.xhr;
     var keys = req.agg.config;
+    var fromIndex = req.query.index*1 || 0;
     var config = {
         consumer_key: keys.consumer_key,
         consumer_secret: keys.consumer_secret,
@@ -494,46 +495,97 @@ Aggregator.get('/', fetchConfig, function(req, res){
                     return r;
                 }
             }).map(function(t){
+                if(!fromIndex){
+                    fromIndex = t.user.statuses_count;
+                }
+
                 return {
                     id: t.id_str,
                     //text: Autolinker.link(t.text, {twitter: true, newWindow: true, className: 'link'}), 
                     text: t.text.replace(/(?:https?|ftp):\/\/\S+/g, ''),
                     urlText: t.text.replace(/(?:https?|ftp):\/\/\S+/g, ''),
                     entities: t.entities,
-                    retweet_count: t.retweet_count
+                    retweet_count: t.retweet_count,
+                    index: fromIndex--
                 };
             });
 
-            var render = function(){
-                if(isAjax){
-                    res.status(200).json({results: results, status: 'success'});
-                }else{
-                    res.render('aggregator/main', {
-                        data: {
-                            title: keys.page_title,
-                            description: keys.page_description,
-                            results: results,
-                            logo: keys.logo.url,
-                            content: tweets,
-                            user: tweets[0].user,
-                            instagram: _.extend({}, instagramData, {username: keys.instagram_user}),
-                            host: req.hostname
+            var ids = results.map(function(r){return r.id;});
+            var Photo = Parse.Object.extend('AGG_photo');
+            var photoQuery = new Parse.Query(Photo);
+
+            photoQuery
+                .containedIn('twtt_id', ids)
+                .find(function(objs){
+                    if(!objs.length){
+                        objs = ids.map(function(id){
+                            var index = _.find(results, function(r){if(id === r.id){return true;}});
+                            if(index){
+                                return new Photo({twtt_id: id, index: index.index})
+                            }
+                        });
+                    }else{
+                        ids.forEach(function(id){
+                            var index = _.find(results, function(r){
+                                if(r.id === id){return r;}
+                            });
+                            var exists = _.find(objs, function(r){
+                                if(r.get('twtt_id') === index.id){return r;}
+                            });
+
+                            if(exists){
+                                exists.set({index: index.index});
+                            }else{
+                                objs.push(new Photo({twtt_id: id, index: index.index}));
+                            }
+                        });
+                    }
+
+                    //Save new objects and update existing ones in case the number has changed
+                    Parse.Object
+                        .saveAll(objs)
+                        .then(sendResponse, sendResponse);
+                }, function(e){
+                    var objs = ids.map(function(id){
+                        var index = _.find(results, function(r){if(id === r.id){return true;}});
+                        if(index){
+                            return new Photo({twtt_id: id, index: index.index})
                         }
                     });
-                }
-            }
+                    //Save all objects in case of error
+                    Parse.Object
+                        .saveAll(objs)
+                        .then(sendResponse, sendResponse);
+                });
 
-            if(isAjax){
-                render();
-            }else if(keys.instagram_user_id && keys.instagram_access_token){
-                //Get instagram data
-                getInstagramData(keys.instagram_user_id, keys.instagram_access_token)
-                    .then(function(data){
-                        instagramData = data;
-                        render();
-                    }, render);
-            }else{
-                render();
+            var render = function(){
+                res.render('aggregator/main', {
+                    data: {
+                        title: keys.page_title,
+                        description: keys.page_description,
+                        results: results,
+                        logo: keys.logo.url,
+                        content: tweets,
+                        user: tweets[0].user,
+                        instagram: _.extend({}, instagramData, {username: keys.instagram_user}),
+                        host: req.hostname
+                    }
+                });
+            }
+            var sendResponse = function(){
+
+                if(isAjax){
+                    res.status(200).json({results: results, status: 'success'});
+                }else if(keys.instagram_user_id && keys.instagram_access_token){
+                    //Get instagram data
+                    getInstagramData(keys.instagram_user_id, keys.instagram_access_token)
+                        .then(function(data){
+                            instagramData = data;
+                            render();
+                        }, render);
+                }else{
+                    render();
+                }
             }
         }, function(e){
             if(isAjax){
@@ -548,6 +600,70 @@ Aggregator.get('/', fetchConfig, function(req, res){
 
 Aggregator.get('/picture/:id/:text', fetchConfig, getPicture);
 Aggregator.get('/picture/:id/:text/:number', fetchConfig, getPicture);
+Aggregator.get('/p/:id', fetchConfig, function(req, res){
+    var Photo = Parse.Object.extend('AGG_photo');
+    var query = new Parse.Query(Photo);
+    var keys = req.agg.config
+    var config = {
+        consumer_key: keys.consumer_key,
+        consumer_secret: keys.consumer_secret,
+        access_token_key: keys.consumer_token_key,
+        access_token_secret: keys.consumer_token_secret
+    };
+    var aggregator = new TwitterAggregator();
+    var instagramData;
+
+    app.locals.GA_ACCOUNT = keys.ga_account;
+
+    query
+        .equalTo('index', req.params.id*1)
+        .first(function(p){
+            if(p){
+                //Get twitts for this instance
+                aggregator
+                    .client(config)
+                    .getTweet({id: p.get('twtt_id')})
+                    .then(function(t, response){
+
+                        if(t && t.entities.media && t.entities.media.length){
+                            t = {
+                                id: t.id_str, 
+                                text: t.text.replace(/(?:https?|ftp):\/\/\S+/g, ''), 
+                                urlText: t.text.replace(/(?:https?|ftp):\/\/\S+/g, ''),
+                                entities: t.entities,
+                                retweet_count: t.retweet_count,
+                                index: p.get('index')
+                            };
+
+                            res.render('aggregator/picture', {
+                                data: {
+                                    tweet: t, 
+                                    title: t.text  + ' - ' + keys.name,
+                                    description: keys.page_description,
+                                    logo: keys.logo.url,
+                                    host: req.hostname
+                                }
+                            });
+                        }else{
+                            console.log('NOT FOUND');
+                            res.redirect(404, '/not-found');
+                        } 
+                    }, function(e){
+                        console.log('NOT FOUND');
+                        console.log(e);
+                        res.redirect(404, '/not-found');
+                    });
+            }else{
+                console.log('NOT FOUND');
+                console.log(p);
+                res.redirect(404, '/not-found');
+            }
+        }, function(e){
+            console.log('NOT FOUND');
+            console.log(e);
+            res.redirect(404, '/not-found');
+        })
+});
 
 Aggregator.get('/about', fetchConfig, function(req, res){
     var config = req.agg.config;
@@ -593,6 +709,11 @@ AggregatorAdmin.get('/', function(req, res){
 
 app.use('/admin/aggregator', AggregatorAdmin);
 
+app.use('/not-found', function(req, res){
+    res.render('aggregator/error', {
+        data: {title: 'Not found', error: 'Looks like the page you are looking for does not longer exists, please try navigating to the home page'}
+    });
+})
 //Default route, blank
 app.get('*', function(req, res){
     res.send(':p');
